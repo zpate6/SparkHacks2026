@@ -12,7 +12,7 @@ type ResumeFile = {
 
 type ExperienceItem = {
   text: string;
-  image?: string;
+  images?: string[];
 };
 
 export default function ViewPublishedPortfolioPage() {
@@ -39,14 +39,9 @@ export default function ViewPublishedPortfolioPage() {
 
         {/* Header */}
         <div className="mb-6 text-center">
-            <h1 className="text-3xl font-semibold text-white">
-                🎬 Published Portfolio
-            </h1>
-            <p className="mt-1 text-sm text-zinc-400">
-                Public profile preview
-            </p>
+          <h1 className="text-3xl font-semibold text-white">🎬 Published Portfolio</h1>
+          <p className="mt-1 text-sm text-zinc-400">Public profile preview</p>
         </div>
-
 
         {/* PREVIEW CONTENT */}
         <div className="space-y-6 flex-1 overflow-y-auto">
@@ -67,28 +62,23 @@ export default function ViewPublishedPortfolioPage() {
               <Empty text="No experience added" />
             ) : (
               experience.map((e, i) => (
-                <p key={i} className="mb-1 text-xs text-zinc-300">
-                  • {e.text}
-                </p>
+                <div key={i} className="mb-4">
+                  {/* Images above the description */}
+                  {e.images && e.images.length > 0 && (
+                    <div className="grid grid-cols-2 gap-2 mb-2">
+                      {e.images.map((img, idx) => (
+                        <img
+                          key={idx}
+                          src={img}
+                          className="rounded-md border border-zinc-800"
+                        />
+                      ))}
+                    </div>
+                  )}
+                  {/* Experience text */}
+                  <p className="text-xs text-zinc-300">{e.text}</p>
+                </div>
               ))
-            )}
-          </PreviewBlock>
-
-          <PreviewBlock title="Experience Gallery">
-            {experience.filter(e => e.image).length === 0 ? (
-              <Empty text="No images uploaded" />
-            ) : (
-              <div className="grid grid-cols-2 gap-2">
-                {experience
-                  .filter(e => e.image)
-                  .map((e, i) => (
-                    <img
-                      key={i}
-                      src={e.image}
-                      className="rounded-md border border-zinc-800"
-                    />
-                  ))}
-              </div>
             )}
           </PreviewBlock>
 
@@ -96,9 +86,7 @@ export default function ViewPublishedPortfolioPage() {
             {genres.length === 0 ? (
               <Empty text="No genres listed" />
             ) : (
-              <p className="text-xs text-zinc-300">
-                {genres.join(", ")}
-              </p>
+              <p className="text-xs text-zinc-300">{genres.join(", ")}</p>
             )}
           </PreviewBlock>
 
@@ -113,11 +101,10 @@ export default function ViewPublishedPortfolioPage() {
               ))
             )}
           </PreviewBlock>
-
         </div>
 
         {/* NAV BUTTON */}
-        <div className="flex gap-2">
+        <div className="flex gap-2 mt-4">
           <Link
             href="/editPortfolioPage"
             className="flex-1 rounded-full border-2 border-red-600 py-3 text-center font-semibold text-red-500 hover:bg-red-600 hover:text-white transition"

@@ -12,7 +12,7 @@ type ResumeFile = {
 
 type ExperienceItem = {
   text: string;
-  images: string[];
+  images?: string[]; // allow multiple images
 };
 
 /* ---------- Helpers ---------- */
@@ -45,15 +45,9 @@ export default function PortfolioPage() {
     if (saved) {
       const data = JSON.parse(saved);
       setResume(data.resume || []);
+      setExperience(data.experience || []);
       setGenres(data.genres || []);
       setConnections(data.connections || []);
-
-      setExperience(
-        (data.experience || []).map((e: any) => ({
-          text: e.text,
-          images: e.images || (e.image ? [e.image] : []),
-        }))
-      );
     }
   }, []);
 
@@ -138,9 +132,7 @@ export default function PortfolioPage() {
 
                 <RemovableList
                   items={resume.map(r => r.name)}
-                  remove={(i) =>
-                    removeItem(i, resume, setResume, "resume")
-                  }
+                  remove={(i) => removeItem(i, resume, setResume, "resume")}
                 />
               </Section>
 
@@ -150,16 +142,14 @@ export default function PortfolioPage() {
                   value={tempExperience}
                   onChange={(e) => setTempExperience(e.target.value)}
                   rows={3}
-                  className="w-full rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm"
+                  placeholder="Describe experience..."
+                  className="w-full resize-none rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm text-white"
                 />
 
                 <button
                   onClick={() => {
                     if (!tempExperience.trim()) return;
-                    const updated = [
-                      ...experience,
-                      { text: tempExperience.trim(), images: [] },
-                    ];
+                    const updated = [...experience, { text: tempExperience.trim(), images: [] }];
                     setExperience(updated);
                     setTempExperience("");
                     savePortfolio("experience", updated);
@@ -174,18 +164,22 @@ export default function PortfolioPage() {
                     <ExperienceCard
                       key={i}
                       exp={exp}
-                      onAddImages={async (files) => {
-                        const imgs = await Promise.all(
-                          Array.from(files).map(fileToBase64)
-                        );
+                      onAddImage={async (file) => {
+                        const img = await fileToBase64(file);
                         const updated = [...experience];
-                        updated[i].images.push(...imgs);
+                        updated[i].images = [...(updated[i].images || []), img];
                         setExperience(updated);
                         savePortfolio("experience", updated);
                       }}
                       onRemove={() =>
                         removeItem(i, experience, setExperience, "experience")
                       }
+                      onRemoveImage={(imgIdx) => {
+                        const updated = [...experience];
+                        updated[i].images = updated[i].images?.filter((_, idx) => idx !== imgIdx);
+                        setExperience(updated);
+                        savePortfolio("experience", updated);
+                      }}
                     />
                   ))}
                 </div>
@@ -214,9 +208,7 @@ export default function PortfolioPage() {
 
                 <RemovableList
                   items={genres}
-                  remove={(i) =>
-                    removeItem(i, genres, setGenres, "genres")
-                  }
+                  remove={(i) => removeItem(i, genres, setGenres, "genres")}
                 />
               </Section>
 
@@ -244,87 +236,91 @@ export default function PortfolioPage() {
 
                 <RemovableList
                   items={connections}
-                  remove={(i) =>
-                    removeItem(i, connections, setConnections, "connections")
-                  }
+                  remove={(i) => removeItem(i, connections, setConnections, "connections")}
                 />
               </Section>
             </div>
 
             {/* RIGHT — Preview */}
-            {/* RIGHT — Preview */}
-<div className="rounded-xl border border-zinc-800 bg-zinc-950 p-4 overflow-y-auto">
+            <div className="rounded-xl border border-zinc-800 bg-zinc-950 p-4 overflow-y-auto">
 
-  {/* Resume Preview */}
-  <PreviewBlock title="Resume Files">
-    {resume.length === 0 ? (
-      <p className="text-xs text-zinc-500">No resumes uploaded</p>
-    ) : (
-      resume.map((r, i) => (
-        <p key={i} className="text-xs text-zinc-300">
-          📄 {r.name}
-        </p>
-      ))
-    )}
-  </PreviewBlock>
+              {/* Resume Preview */}
+              <PreviewBlock title="Resume Files">
+                {resume.length === 0 ? (
+                  <p className="text-xs text-zinc-500">No resumes uploaded</p>
+                ) : (
+                  resume.map((r, i) => (
+                    <p key={i} className="text-xs text-zinc-300">
+                      📄 {r.name}
+                    </p>
+                  ))
+                )}
+              </PreviewBlock>
 
-  {/* Experience Text Preview */}
-  <PreviewBlock title="Experience">
-    {experience.length === 0 ? (
-      <p className="text-xs text-zinc-500">No experience added</p>
-    ) : (
-      experience.map((e, i) => (
-        <p key={i} className="mb-2 text-xs text-zinc-300">
-          • {e.text}
-        </p>
-      ))
-    )}
-  </PreviewBlock>
+              {/* Experience Text Preview */}
+              <PreviewBlock title="Experience">
+                {experience.length === 0 ? (
+                  <p className="text-xs text-zinc-500">No experience added</p>
+                ) : (
+                  experience.map((e, i) => (
+                    <p key={i} className="mb-2 text-xs text-zinc-300">
+                      • {e.text}
+                    </p>
+                  ))
+                )}
+              </PreviewBlock>
 
-  {/* Experience Image Gallery */}
-  <PreviewBlock title="Experience Gallery">
-    {experience.filter(e => e.images).length === 0 ? (
-      <p className="text-xs text-zinc-500">No images uploaded</p>
-    ) : (
-      <div className="grid grid-cols-2 gap-2">
-        {experience
-          .filter(e => e.images)
-          .map((e, i) => (
-            <img
-              key={i}
-              src={e.images}
-              className="rounded-md border border-zinc-800"
-            />
-          ))}
-      </div>
-    )}
-  </PreviewBlock>
+              {/* Experience Image Gallery */}
+              <PreviewBlock title="Experience Gallery">
+                {experience.filter(e => e.images?.length).length === 0 ? (
+                  <p className="text-xs text-zinc-500">No images uploaded</p>
+                ) : (
+                  <div className="space-y-2">
+                    {experience.map((e, i) =>
+                      e.images?.length ? (
+                        <div key={i}>
+                          <p className="text-xs text-zinc-300 mb-1">• {e.text}</p>
+                          <div className="grid grid-cols-2 gap-2">
+                            {e.images.map((img, idx) => (
+                              <img
+                                key={idx}
+                                src={img}
+                                className="rounded-md border border-zinc-800"
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      ) : null
+                    )}
+                  </div>
+                )}
+              </PreviewBlock>
 
-  {/* Genres Preview */}
-  <PreviewBlock title="Genres">
-    {genres.length === 0 ? (
-      <p className="text-xs text-zinc-500">No genres added</p>
-    ) : (
-      <p className="text-xs text-zinc-300">
-        {genres.join(", ")}
-      </p>
-    )}
-  </PreviewBlock>
+              {/* Genres Preview */}
+              <PreviewBlock title="Genres">
+                {genres.length === 0 ? (
+                  <p className="text-xs text-zinc-500">No genres added</p>
+                ) : (
+                  <p className="text-xs text-zinc-300">
+                    {genres.join(", ")}
+                  </p>
+                )}
+              </PreviewBlock>
 
-  {/* Connections Preview */}
-  <PreviewBlock title="Connections">
-    {connections.length === 0 ? (
-      <p className="text-xs text-zinc-500">No connections added</p>
-    ) : (
-      connections.map((c, i) => (
-        <p key={i} className="text-xs text-zinc-300">
-          • {c}
-        </p>
-      ))
-    )}
-  </PreviewBlock>
+              {/* Connections Preview */}
+              <PreviewBlock title="Connections">
+                {connections.length === 0 ? (
+                  <p className="text-xs text-zinc-500">No connections added</p>
+                ) : (
+                  connections.map((c, i) => (
+                    <p key={i} className="text-xs text-zinc-300">
+                      • {c}
+                    </p>
+                  ))
+                )}
+              </PreviewBlock>
 
-</div>
+            </div>
 
           </div>
         </div>
@@ -394,38 +390,54 @@ function RemovableList({
 
 function ExperienceCard({
   exp,
-  onImage,
+  onAddImage,
   onRemove,
+  onRemoveImage,
 }: {
   exp: ExperienceItem;
-  onImage: (file: File) => void;
+  onAddImage: (file: File) => void;
   onRemove: () => void;
+  onRemoveImage: (imgIdx: number) => void;
 }) {
   return (
-    <div className="rounded-lg border border-zinc-800 p-2 text-xs">
-      {exp.images.length > 0 && (
-        <div className="flex gap-2 overflow-x-auto mb-2">
-          {exp.images.map((img, i) => (
-            <img key={i} src={img} className="h-16 rounded-md" />
-          ))}
-        </div>
-      )}
+    <div className="rounded-lg border border-zinc-800 p-2 text-xs text-zinc-300">
+      <p>{exp.text}</p>
 
-      <p className="text-zinc-300">{exp.text}</p>
+      {/* Images */}
+      <div className="mt-2 flex flex-wrap gap-2">
+        {exp.images?.map((img, idx) => (
+          <div key={idx} className="relative">
+            <img
+              src={img}
+              className="rounded-md w-16 h-16 object-cover border border-zinc-700"
+            />
+            <button
+              onClick={() => onRemoveImage(idx)}
+              className="absolute -top-2 -right-2 rounded-full bg-red-500 text-white text-[10px] w-4 h-4 flex items-center justify-center"
+            >
+              ❌
+            </button>
+          </div>
+        ))}
+      </div>
 
-      <div className="mt-2 flex justify-between">
+      <div className="mt-2 flex justify-between items-center">
         <label className="cursor-pointer text-red-500">
-          Add Images
+          Upload Image
           <input
             type="file"
             accept="image/*"
-            multiple
             hidden
-            onChange={(e) => e.target.files && onAddImages(e.target.files)}
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) onAddImage(file);
+            }}
           />
         </label>
 
-        <button onClick={onRemove} className="text-red-500">❌</button>
+        <button onClick={onRemove} className="text-red-500">
+          ❌ Experience
+        </button>
       </div>
     </div>
   );

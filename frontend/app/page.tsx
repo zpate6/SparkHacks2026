@@ -1,23 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [floatingItems, setFloatingItems] = useState<Array<{ left: string, delay: string, duration: string }>>([]);
   const router = useRouter();
-
-  useEffect(() => {
-    // eslint-disable-next-line
-    setFloatingItems([...Array(10)].map(() => ({
-      left: `${Math.random() * 100}%`,
-      delay: `${Math.random() * 10}s`,
-      duration: `${12 + Math.random() * 10}s`,
-    })));
-  }, []);
 
   const handleLogin = () => {
     if (!email || !password) {
@@ -40,14 +30,14 @@ export default function LoginPage() {
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-black">
       {/* Floating background */}
       <div className="pointer-events-none absolute inset-0">
-        {floatingItems.map((item, i) => (
+        {[...Array(10)].map((_, i) => (
           <span
             key={i}
             className="absolute animate-float text-3xl opacity-20"
             style={{
-              left: item.left,
-              animationDelay: item.delay,
-              animationDuration: item.duration,
+              left: `${Math.random() * 100}%`,
+              animationDelay: `${Math.random() * 10}s`,
+              animationDuration: `${12 + Math.random() * 10}s`,
             }}
           >
             🎬
