@@ -42,6 +42,7 @@ public class UserController {
         profile.setLastName(request.getLastName());
         profile.setProfession(request.getProfession());
         profile.setZipcode(request.getZipcode());
+        profile.setImage(request.getImage());
         profile = profileRepository.save(profile);
 
         // 3. Create an empty Portfolio so the ID is not null

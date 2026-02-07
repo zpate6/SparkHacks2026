@@ -3,8 +3,14 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { Heart, X, MessageCircle, User, Star, MapPin, Briefcase, Film, Award, Layers, BookOpen, Share2, Clapperboard } from "lucide-react";
 import Link from "next/link";
+import actor from "../photos/actor.png";
+import director from "../photos/director.png";
+import musician from "../photos/musician.png";
+import producer from "../photos/producer.png";
+import writer from "../photos/scriptwriter.png";
+import studio from "../photos/studio.png";
+import { Heart, X, MessageCircle, User, Star, MapPin, Briefcase, Film, Award, Layers, BookOpen, Share2, Clapperboard, LogOut } from "lucide-react";
 import MiniNetwork from "@/components/MiniNetwork";
 import { randomBeta } from "d3";
 
@@ -61,12 +67,24 @@ export default function HomePage() {
           // Let's check the backend model: Profile has firstName, lastName, profession, zipcode, skills, genres, preferredPay.
           // Frontend Profile interface needs: id, name, role, distance, image, bio, tags.
 
+          // Helper to get default image based on role
+          const getDefaultImage = (role: string) => {
+            const normalizedRole = role?.toLowerCase() || "";
+            if (normalizedRole.includes("director")) return director;
+            if (normalizedRole.includes("producer")) return producer;
+            if (normalizedRole.includes("musician")) return musician;
+            if (normalizedRole.includes("writer")) return writer;
+            if (normalizedRole.includes("actor")) return actor;
+            if (normalizedRole.includes("studio")) return studio;
+            return director; // Fallback
+          };
+
           const mappedProfiles = data.map((p: any) => ({
             id: p.id,
             name: `${p.firstName} ${p.lastName}`,
             role: p.profession,
             distance: "10 miles away", // Mock distance for now as backend doesn't calculate it yet
-            image: "/profiles/director.png", // Mock image for now
+            image: p.image || getDefaultImage(p.profession), // Use uploaded image or role-based default
             bio: p.bio || "No bio available", // Add bio to backend model if missing, or use default
             tags: p.skills || [],
           }));
@@ -120,13 +138,27 @@ export default function HomePage() {
 
   return (
     <div className="flex h-screen w-full flex-col bg-black text-white overflow-hidden font-sans">
-      <header className="flex items-center justify-between px-8 py-4 border-b border-zinc-800 shrink-0">
+      <header className="flex items-center justify-between px-8 py-4 border-b border-zinc-800 shrink-0 bg-black/50 backdrop-blur-md sticky top-0 z-50">
         <div className="flex items-center gap-2">
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-600 shadow-lg shadow-red-900/40">
             <span className="text-xl">🎬</span>
           </div>
-          <h1 className="text-xl font-bold tracking-tight">Entertainment <span className="text-red-600">Tinder</span></h1>
+          <h1 className="text-xl font-bold tracking-tight">
+            Entertainment <span className="text-red-600">Tinder</span>
+          </h1>
         </div>
+        
+        {/* Functional Logout Button */}
+        <button
+          onClick={() => {
+            localStorage.removeItem("user"); // Clears session
+            router.push("/");               // Redirects to login page
+          }}
+          className="flex items-center gap-2 px-4 py-2 rounded-full bg-zinc-900 text-zinc-400 hover:bg-zinc-800 hover:text-white transition-all border border-zinc-800 active:scale-95"
+        >
+          <LogOut size={18} />
+          <span className="text-sm font-medium">Logout</span>
+        </button>
       </header>
 
       <div className="flex-1 flex overflow-hidden">
