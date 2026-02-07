@@ -5,6 +5,12 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Heart, X, MessageCircle, User, Star, MapPin, Briefcase, Film, Map } from "lucide-react";
 import Link from "next/link";
+import actor from "../photos/actor.png";
+import director from "../photos/director.png";
+import musician from "../photos/musician.png";
+import producer from "../photos/producer.png";
+import writer from "../photos/scriptwriter.png";
+import studio from "../photos/studio.png";
 
 interface Profile {
   id: string;
@@ -58,12 +64,24 @@ export default function HomePage() {
           // Let's check the backend model: Profile has firstName, lastName, profession, zipcode, skills, genres, preferredPay.
           // Frontend Profile interface needs: id, name, role, distance, image, bio, tags.
 
+          // Helper to get default image based on role
+          const getDefaultImage = (role: string) => {
+            const normalizedRole = role?.toLowerCase() || "";
+            if (normalizedRole.includes("director")) return director;
+            if (normalizedRole.includes("producer")) return producer;
+            if (normalizedRole.includes("musician")) return musician;
+            if (normalizedRole.includes("writer")) return writer;
+            if (normalizedRole.includes("actor")) return actor;
+            if (normalizedRole.includes("studio")) return studio;
+            return director; // Fallback
+          };
+
           const mappedProfiles = data.map((p: any) => ({
             id: p.id,
             name: `${p.firstName} ${p.lastName}`,
             role: p.profession,
             distance: "10 miles away", // Mock distance for now as backend doesn't calculate it yet
-            image: p.image || "/profiles/director.png", // Use uploaded image or default
+            image: p.image || getDefaultImage(p.profession), // Use uploaded image or role-based default
             bio: p.bio || "No bio available", // Add bio to backend model if missing, or use default
             tags: p.skills || [],
           }));
