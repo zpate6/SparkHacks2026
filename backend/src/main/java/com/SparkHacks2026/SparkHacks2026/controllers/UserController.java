@@ -1,8 +1,14 @@
 package com.SparkHacks2026.SparkHacks2026.controllers;
 
+import com.SparkHacks2026.SparkHacks2026.models.Auth;
+import com.SparkHacks2026.SparkHacks2026.models.Profile;
+import com.SparkHacks2026.SparkHacks2026.models.RegistrationRequest;
 import com.SparkHacks2026.SparkHacks2026.models.User;
+import com.SparkHacks2026.SparkHacks2026.repositories.AuthRepository;
+import com.SparkHacks2026.SparkHacks2026.repositories.ProfileRepository;
 import com.SparkHacks2026.SparkHacks2026.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -15,15 +21,41 @@ public class UserController {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private AuthRepository authRepository;
+
+    @Autowired
+    private ProfileRepository profileRepository;
+
     // GET all users
     @GetMapping
     public List<User> getAllUsers() {
         return userRepository.findAll();
     }
 
-    // POST a new user
-    @PostMapping
-    public User createUser(@RequestBody User user) {
+    // POST a new user with a 201 Created status
+    @PostMapping("/register")
+    public User registerUser(@RequestBody RegistrationRequest request) {
+        // 1. Create and save Auth document
+        Auth auth = new Auth();
+        auth.setEmail(request.getEmail());
+        auth.setPasswordHash( request.getPassword()); // Add hashing logic
+        auth = authRepository.save(auth);
+
+        // 2. Create and save Profile document
+        Profile profile = new Profile();
+        profile.setFirstName(request.getFirstName());
+        profile.setLastName(request.getLastName());
+        profile.setProfession(request.getProfession());
+        profile.setZipcode(request.getZipcode());
+        profile = profileRepository.save(profile);
+
+        // 3. Link them to the main User document
+        User user = new User();
+        user.setAuthId(auth.getId());
+        user.setProfileId(profile.getId());
+        user.setStatus("ACTIVE");
+
         return userRepository.save(user);
     }
 }

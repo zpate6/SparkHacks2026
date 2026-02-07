@@ -7,3 +7,14 @@ export interface Profile {
   emoji: string;
   tags: string[];
 }
+
+// types/user.ts
+export interface User {
+  id: string;
+  status: 'ACTIVE' | 'HIBERNATED';
+  createdAt: string; // Dates are typically returned as ISO strings from Spring
+  authId: string;
+  profileId: string;
+  portfolioId: string;
+  analyticsId: string;
+}
