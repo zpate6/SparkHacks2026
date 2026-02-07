@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [floatingItems, setFloatingItems] = useState<Array<{ left: string, delay: string, duration: string }>>([]);
+  const [floatingItems, setFloatingItems] = useState<any[]>([]);
   const router = useRouter();
 
   useEffect(() => {
@@ -57,14 +57,14 @@ export default function LoginPage() {
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-black">
       {/* Floating background */}
       <div className="pointer-events-none absolute inset-0">
-        {floatingItems.map((item, i) => (
+        {[...Array(10)].map((_, i) => (
           <span
             key={i}
             className="absolute animate-float text-3xl opacity-20"
             style={{
-              left: item.left,
-              animationDelay: item.delay,
-              animationDuration: item.duration,
+              left: `${Math.random() * 100}%`,
+              animationDelay: `${Math.random() * 10}s`,
+              animationDuration: `${12 + Math.random() * 10}s`,
             }}
           >
             🎬
@@ -117,7 +117,7 @@ export default function LoginPage() {
           </button>
 
           <Link
-            href="/signUp"
+            href="/signUpPage"
             className="mt-2 w-full rounded-full border-2 border-red-600 py-3.5 text-lg font-semibold text-red-500 text-center block hover:bg-red-600 hover:text-white transition active:scale-95"
           >
             Sign Up
