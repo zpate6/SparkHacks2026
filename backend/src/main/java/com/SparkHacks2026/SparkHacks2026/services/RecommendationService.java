@@ -13,7 +13,6 @@ public class RecommendationService {
 
     public List<Profile> getRecommendedProfiles(String userId, String zipcode) {
         // This list will hold our final "stack" of cards
-        List<Profile> cardStack = new ArrayList<>();
 
         // 1. Logic for Recently Connected/Endorsed (Fetch from ConnectionRepository)
         // [Add Logic here to prioritize specific IDs]
@@ -21,8 +20,8 @@ public class RecommendationService {
         // 2. Location-based profiles (Zipcode match)
         List<Profile> localProfiles = profileRepository.findByZipcode(zipcode).stream()
                 .filter(p -> !p.getId().equals(userId))
-                .collect(Collectors.toList());
-        cardStack.addAll(localProfiles);
+                .toList();
+        List<Profile> cardStack = new ArrayList<>(localProfiles);
 
         // 3. Random overall to fill the stack
         List<Profile> allProfiles = profileRepository.findAll();

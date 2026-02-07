@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/connections")
@@ -19,6 +20,7 @@ public class ConnectionController {
 
     @Autowired private ConnectionService connectionService;
     @Autowired private RecommendationService recommendationService;
+    @Autowired private ConnectionRepository connectionRepository;
 
     // Get the dynamic stack for the Home Page
     @GetMapping("/cards/{userId}")
@@ -35,8 +37,23 @@ public class ConnectionController {
     }
 
     @GetMapping("/path")
-    public List<String> getPath(@RequestParam String from, @RequestParam String to) {
+    public List<Map<String, String>> getPath(@RequestParam String from, @RequestParam String to) {
         return connectionService.findConnectionPath(from, to);
+    }
+
+    @PostMapping("/test/manual")
+    public Connection createTestConnection(
+            @RequestParam String user1,
+            @RequestParam String user2,
+            @RequestParam String status) {
+
+        Connection connection = new Connection();
+        connection.setUsers(Arrays.asList(user1, user2));
+        connection.setStatus("ACCEPTED"); // Use "ACCEPTED" for testing mutual matches
+        connection.setRelationshipType("WORKED_WITH");
+        connection.setPathWeight(1);
+
+        return connectionRepository.save(connection);
     }
 
     @GetMapping("/graph")
