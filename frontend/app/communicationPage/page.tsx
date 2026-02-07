@@ -14,6 +14,8 @@ export default function ConnectionsPage() {
   const [selected, setSelected] = useState(connections[0]);
   const [messages, setMessages] = useState<Record<string, Message[]>>({});
   const [input, setInput] = useState("");
+  const [endorsements, setEndorsements] = useState<Record<string, number>>({});
+  const [endorsed, setEndorsed] = useState<Record<string, boolean>>({});
 
   // Load messages
   useEffect(() => {
@@ -25,6 +27,39 @@ export default function ConnectionsPage() {
   useEffect(() => {
     localStorage.setItem("messages", JSON.stringify(messages));
   }, [messages]);
+
+  // Load endorsements
+  useEffect(() => {
+    const saved = localStorage.getItem("endorsements");
+    if (saved) setEndorsements(JSON.parse(saved));
+    const savedFlag = localStorage.getItem("endorsed");
+    if (savedFlag) setEndorsed(JSON.parse(savedFlag));
+  }, []);
+
+  // Save endorsements
+  useEffect(() => {
+    localStorage.setItem("endorsements", JSON.stringify(endorsements));
+  }, [endorsements]);
+
+  useEffect(() => {
+    localStorage.setItem("endorsed", JSON.stringify(endorsed));
+  }, [endorsed]);
+
+  const handleEndorse = () => {
+    setEndorsements((prev) => ({
+      ...prev,
+      [selected]: (prev[selected] || 0) + 1,
+    }));
+    setEndorsed((prev) => ({ ...prev, [selected]: true }));
+  };
+
+  const handleRetract = () => {
+    setEndorsements((prev) => ({
+      ...prev,
+      [selected]: Math.max(0, (prev[selected] || 0) - 1),
+    }));
+    setEndorsed((prev) => ({ ...prev, [selected]: false }));
+  };
 
   const sendMessage = () => {
     if (!input.trim()) return;
@@ -91,8 +126,35 @@ export default function ConnectionsPage() {
           {/* RIGHT — Chat */}
           <div className="col-span-2 flex flex-col bg-zinc-900">
             {/* Chat Header */}
-            <div className="border-b border-zinc-800 px-4 py-3 text-sm text-zinc-300">
-              Chat with <span className="text-red-500">{selected}</span>
+            <div className="border-b border-zinc-800 px-4 py-3 text-sm text-zinc-300 flex items-center justify-between">
+              <div>
+                Chat with <span className="text-red-500">{selected}</span>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <div className="text-sm text-zinc-300">
+                  Endorsements:{' '}
+                  <span className="font-semibold text-white">
+                    {endorsements[selected] || 0}
+                  </span>
+                </div>
+
+                {endorsed[selected] ? (
+                  <button
+                    onClick={handleRetract}
+                    className="rounded-md bg-zinc-800 px-3 py-1 text-sm font-medium text-zinc-200 hover:bg-zinc-700 transition"
+                  >
+                    Retract
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleEndorse}
+                    className="rounded-md bg-red-600 px-3 py-1 text-sm font-medium text-white hover:bg-red-700 transition"
+                  >
+                    Endorse
+                  </button>
+                )}
+              </div>
             </div>
 
             {/* Messages (SCROLLABLE, FOOTER SAFE) */}
