@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-
+//hrllo
 export default function SignUpPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
