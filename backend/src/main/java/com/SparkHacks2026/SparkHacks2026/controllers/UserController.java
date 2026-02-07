@@ -2,6 +2,7 @@ package com.SparkHacks2026.SparkHacks2026.controllers;
 
 import com.SparkHacks2026.SparkHacks2026.models.*;
 import com.SparkHacks2026.SparkHacks2026.repositories.AuthRepository;
+import com.SparkHacks2026.SparkHacks2026.repositories.PortfolioRepository;
 import com.SparkHacks2026.SparkHacks2026.repositories.ProfileRepository;
 import com.SparkHacks2026.SparkHacks2026.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,14 +16,10 @@ import java.util.List;
 @CrossOrigin(origins = "*") // Allows your frontend to connect
 public class UserController {
 
-    @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private AuthRepository authRepository;
-
-    @Autowired
-    private ProfileRepository profileRepository;
+    @Autowired private UserRepository userRepository;
+    @Autowired private AuthRepository authRepository;
+    @Autowired private ProfileRepository profileRepository;
+    @Autowired private PortfolioRepository portfolioRepository;
 
     // GET all users
     @GetMapping
@@ -48,11 +45,18 @@ public class UserController {
         profile.setImage(request.getImage());
         profile = profileRepository.save(profile);
 
-        // 3. Link them to the main User document
+        // 3. Create an empty Portfolio so the ID is not null
+        Portfolio portfolio = new Portfolio();
+        portfolio = portfolioRepository.save(portfolio);
+
+        // 4. Link them to the main User document
         User user = new User();
         user.setAuthId(auth.getId());
         user.setProfileId(profile.getId());
+        user.setProfileId(portfolio.getId());
         user.setStatus("ACTIVE");
+
+
 
         return userRepository.save(user);
     }
@@ -66,8 +70,20 @@ public class UserController {
         throw new RuntimeException("Invalid credentials");
     }
 
+    @GetMapping("/by-profile/{profileId}")
+    public User getUserByProfile(@PathVariable String profileId) {
+        return userRepository.findByProfileId(profileId)
+                .orElseThrow(() -> new RuntimeException("User not found for profile: " + profileId));
+    }
+
     @GetMapping("/profile/{profileId}")
     public Profile getProfile(@PathVariable String profileId) {
         return profileRepository.findById(profileId).orElseThrow(() -> new RuntimeException("Profile not found"));
+    }
+
+    @GetMapping("/portfolio/{id}")
+    public Portfolio getPortfolio(@PathVariable String id) {
+        return portfolioRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Portfolio not found"));
     }
 }
