@@ -8,4 +8,7 @@ import org.springframework.stereotype.Repository;
 public interface ConnectionRepository extends MongoRepository<Connection, String> {
     // Custom query to find connections for a specific user
     java.util.List<Connection> findByUsersContaining(String userId);
+
+    // Find connections by user and status
+    java.util.List<Connection> findByUsersContainingAndStatus(String userId, String status);
 }
