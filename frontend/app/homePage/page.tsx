@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { Heart, X, MessageCircle, User, Star, MapPin, Briefcase, Film } from "lucide-react";
+import { Heart, X, MessageCircle, User, Star, MapPin, Briefcase, Film, Map } from "lucide-react";
 import Link from "next/link";
 
 interface Profile {
@@ -245,6 +245,8 @@ export default function HomePage() {
           >
             <Heart size={32} fill="currentColor" strokeWidth={0} />
           </button>
+
+          
         </div>
       </main>
 
@@ -256,12 +258,6 @@ export default function HomePage() {
               <Film size={24} strokeWidth={2.5} />
             </Link>
           </li>
-          {/* this is the star */}
-          {/* <li>
-            <button className="flex flex-col items-center gap-1 text-zinc-500 hover:text-zinc-300 transition">
-              <Star size={24} />
-            </button>
-          </li> */}
           <li>
             <Link href="/communicationPage" className="flex flex-col items-center gap-1 text-zinc-500 hover:text-zinc-300 transition">
               <MessageCircle size={24} />
@@ -270,6 +266,11 @@ export default function HomePage() {
           <li>
             <Link href="/portfolioPage" className="flex flex-col items-center gap-1 text-zinc-500 hover:text-zinc-300 transition">
               <User size={24} />
+            </Link>
+          </li>
+          <li>
+            <Link href="/searchPage" className="flex flex-col items-center gap-1 text-zinc-500 hover:text-zinc-300 transition">
+              <Map size={24} />
             </Link>
           </li>
         </ul>
