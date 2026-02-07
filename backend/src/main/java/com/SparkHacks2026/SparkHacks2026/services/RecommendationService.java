@@ -25,7 +25,7 @@ public class RecommendationService {
         // Exclude anyone where a connection already exists (Pending or Accepted)
         // to prevent duplicate swipes or seeing people you already matched with
         Set<String> excludedIds = existingConnections.stream()
-                .filter(c -> c.getStatus().equals("CONNECTED"))
+                .filter(c -> c.getStatus().equals("ACCEPTED"))
                 .flatMap(c -> c.getUsers().stream())
                 .collect(Collectors.toSet());
 
