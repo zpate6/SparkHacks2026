@@ -10,6 +10,7 @@ import musician from "../photos/musician.png";
 import producer from "../photos/producer.png";
 import writer from "../photos/scriptwriter.png";
 import studio from "../photos/studio.png";
+import llogo from "../photos/curtaincalllogo.png";
 import { Heart, X, MessageCircle, User, Star, MapPin, Briefcase, Film, Award, Layers, BookOpen, Share2, Clapperboard, LogOut } from "lucide-react";
 import MiniNetwork from "@/components/MiniNetwork";
 import { randomBeta } from "d3";
@@ -142,11 +143,16 @@ export default function HomePage() {
     <div className="flex h-screen w-full flex-col bg-black text-white overflow-hidden font-sans">
       <header className="flex items-center justify-between px-8 py-4 border-b border-zinc-800 shrink-0 bg-black/50 backdrop-blur-md sticky top-0 z-50">
         <div className="flex items-center gap-2">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-600 shadow-lg shadow-red-900/40">
-            <span className="text-xl">🎬</span>
+          <div className="flex h-10 w-10 items-cefnter justify-center rounded-full shadow-lg shadow-red-900/40">
+            <Image
+              src={llogo}
+              alt="Curtain Call logo"
+              width={104}
+              height={104}
+            />
           </div>
           <h1 className="text-xl font-bold tracking-tight">
-            Entertainment <span className="text-red-600">Tinder</span>
+            Curtain <span className="text-red-600">Call</span>
           </h1>
         </div>
         
