@@ -31,7 +31,7 @@ export default function SignUpPage() {
       })
     );
 
-    router.push("/page3");
+    router.push("/homePage");
   };
 
   return (
