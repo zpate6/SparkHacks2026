@@ -3,14 +3,34 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { createNewUser } from "@/lib/api";
+import { User } from "@/types";
 
 export default function SignUpPage() {
   const [name, setName] = useState("");
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+    firstName: '',
+    lastName: '',
+    profession: 'ACTOR', // Default from your Enum list
+    zipcode: '',
+  });
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
+  const [userType, setUserType] = useState("Studios");
   const [floatingItems, setFloatingItems] = useState<Array<{ left: string, delay: string, duration: string }>>([]);
   const router = useRouter();
+
+  const USER_TYPES = [
+    "Studios",
+    "Producer",
+    "Directors",
+    "Scriptwriter",
+    "Actors",
+    "Musicians"
+  ];
 
   useEffect(() => {
     // eslint-disable-next-line
@@ -21,27 +41,42 @@ export default function SignUpPage() {
     })));
   }, []);
 
-  const handleSignUp = () => {
-    if (!name || !email || !password || !confirm) {
+  const handleSignUp = async () => {
+
+    if (!formData.firstName || !formData.lastName || !formData.email || !formData.password || !formData.profession || !formData.zipcode || !confirm) {
       alert("Please fill out all fields");
       return;
     }
 
-    if (password !== confirm) {
+    if (formData["password"] !== confirm) {
       alert("Passwords do not match");
       return;
     }
 
-    localStorage.setItem(
-      "user",
-      JSON.stringify({
-        name,
-        email,
-        type: "signup",
-      })
-    );
 
-    router.push("/homePage");
+    try {
+      // 1. Send data to your Spring Boot backend
+      const response = await fetch('http://localhost:8080/api/users/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        localStorage.setItem(
+          "user",
+          JSON.stringify({
+            ...data,
+            type: "login",
+          })
+        );
+        alert('User created successfully!');
+        router.push('/homePage'); // Redirect to swiping home page
+      }
+    } catch (error) {
+      console.error('Registration failed:', error);
+    }
   };
 
   return (
@@ -64,7 +99,7 @@ export default function SignUpPage() {
       </div>
 
       {/* Phone frame */}
-      <div className="relative h-[700px] w-[520px] overflow-hidden rounded-[28px] bg-zinc-900 shadow-[0_10px_50px_rgba(220,38,38,0.35)]">
+      <div className="relative h-[780px] w-[520px] overflow-hidden rounded-[28px] bg-zinc-900 shadow-[0_10px_50px_rgba(220,38,38,0.35)]">
         {/* Header */}
         <div className="bg-gradient-to-br from-red-600 to-red-900 px-6 pt-10 pb-5 text-white">
           <div className="mb-4 text-center text-4xl">🎬</div>
@@ -75,15 +110,63 @@ export default function SignUpPage() {
         </div>
 
         {/* Scrollable Content */}
-        <div className="flex flex-col gap-4 px-6 py-5 overflow-y-auto max-h-[430px]">
+        <div className="flex flex-col gap-4 px-6 py-5 overflow-y-auto max-h-[510px]">
           <div className="flex flex-col gap-2">
             <label className="text-sm font-medium text-zinc-400">
-              First & Last Name
+              User Type
+            </label>
+            <div className="relative">
+              <select
+                value={formData["profession"]}
+                onChange={(e) => setFormData({ ...formData, profession: e.target.value })}
+                className="w-full appearance-none rounded-xl border-2 border-zinc-800 bg-zinc-900 px-4 py-3 text-white outline-none focus:border-red-600"
+              >
+                {USER_TYPES.map((type) => (
+                  <option key={type} value={type}>
+                    {type}
+                  </option>
+                ))}
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-zinc-400">
+                <svg className="h-4 w-4 fill-current" viewBox="0 0 20 20">
+                  <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-medium text-zinc-400">
+              First Name
             </label>
             <input
-              placeholder="First Last"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
+              placeholder="First Name"
+              value={formData.firstName}
+              onChange={(e) => setFormData({...formData, firstName: e.target.value})}
+              className="rounded-xl border-2 border-zinc-800 bg-zinc-900 px-4 py-3 text-white outline-none focus:border-red-600"
+            />
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-medium text-zinc-400">
+              Last Name
+            </label>
+            <input
+              placeholder="Last Name"
+              value={formData.lastName}
+              onChange={(e) => setFormData({...formData, lastName: e.target.value})}
+              className="rounded-xl border-2 border-zinc-800 bg-zinc-900 px-4 py-3 text-white outline-none focus:border-red-600"
+            />
+          </div>
+          
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-medium text-zinc-400">
+              Zip Code
+            </label>
+            <input
+              placeholder="Zip Code"
+              value={formData.zipcode}
+              onChange={(e) => setFormData({...formData, zipcode: e.target.value})}
               className="rounded-xl border-2 border-zinc-800 bg-zinc-900 px-4 py-3 text-white outline-none focus:border-red-600"
             />
           </div>
@@ -95,8 +178,8 @@ export default function SignUpPage() {
             <input
               type="email"
               placeholder="your@email.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              value={formData.email}
+              onChange={(e) => setFormData({...formData, email: e.target.value})}
               className="rounded-xl border-2 border-zinc-800 bg-zinc-900 px-4 py-3 text-white outline-none focus:border-red-600"
             />
           </div>
@@ -108,8 +191,8 @@ export default function SignUpPage() {
             <input
               type="password"
               placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              value={formData.password}
+              onChange={(e) => setFormData({...formData, password: e.target.value})}
               className="rounded-xl border-2 border-zinc-800 bg-zinc-900 px-4 py-3 text-white outline-none focus:border-red-600"
             />
           </div>
