@@ -13,6 +13,7 @@ interface GraphNode extends d3.SimulationNodeDatum {
 }
 
 interface GraphLink extends d3.SimulationLinkDatum<GraphNode> {
+  status: string;
   source: string | GraphNode;
   target: string | GraphNode;
   type: string;
@@ -82,12 +83,19 @@ export default function D3NetworkGraph() {
 
     // 4. Draw Links
     const link = g.append("g")
-      .attr("stroke", "#444")
-      .attr("stroke-opacity", 0.6)
       .selectAll("line")
       .data(data.links)
       .join("line")
-      .attr("stroke-width", d => d.type === 'WORKED_WITH' ? 2 : 1);
+      .attr("stroke", "#555")
+      .attr("stroke-opacity", 0.6)
+      // VARYING THICKNESS LOGIC
+      .attr("stroke-width", d => {
+        if (d.type === 'WORKED_WITH') return 6; // Endorsed/Worked With
+        if (d.status === 'ACCEPTED') return 3;  // Connected
+        return 1.5;                             // Awaiting/Pending
+      })
+      // DASHED LINE FOR PENDING
+      .attr("stroke-dasharray", d => d.status === 'PENDING' ? "4,4" : "0");
 
     // 5. Draw Nodes
     const node = g.append("g")
@@ -118,6 +126,7 @@ export default function D3NetworkGraph() {
         case 'PRODUCER': return '#3b82f6';
         case 'DIRECTOR': return '#10b981';
         case 'ACTOR': return '#f59e0b';
+        case 'SCRIPTWRITER': return '#a855f7';
         default: return '#9ca3af';
       }
     };
@@ -169,18 +178,77 @@ export default function D3NetworkGraph() {
       });
   }
 
+      const getProfessionColor = (profession: string) => {
+      switch (profession?.toUpperCase()) {
+        case 'STUDIO': return '#ef4444';   // Red
+        case 'PRODUCER': return '#3b82f6'; // Blue
+        case 'DIRECTOR': return '#10b981'; // Green
+        case 'ACTOR': return '#f59e0b';    // Amber
+        case 'SCRIPTWRITER': return '#a855f7'; // Purple
+        default: return '#9ca3af';         // Zinc
+      }
+    };
+
   return (
-    <div className="relative h-screen w-full bg-black overflow-hidden">
-      <div className="absolute top-10 left-10 z-10 text-white">
-        <p className="text-zinc-400">Drag to explore. Click to view Portfolio.</p>
-      </div>
-      {loading && (
-        <div className="flex h-screen items-center justify-center text-white">
-          Building connections...
-        </div>
-      )}
-      <svg ref={svgRef} className="h-full w-full cursor-move" />
-      <BottomNav></BottomNav>
+  <div className="relative h-screen w-full bg-black overflow-hidden">
+    {/* Page Instructions - Top Left */}
+    <div className="absolute top-10 left-10 z-10 text-white space-y-2">
+      <h1 className="text-2xl font-bold tracking-tighter italic">
+        NETWORK<span className="text-red-600">WEB</span>
+      </h1>
+      <p className="text-zinc-400 text-sm">Drag to explore. Click to view Portfolio.</p>
     </div>
-  );
+
+    {/* PROFESSIONAL KEY & CONNECTION LEGEND - Top Right */}
+    <div className="absolute top-10 right-10 z-10 bg-zinc-950/80 backdrop-blur-md border border-zinc-800 p-5 rounded-2xl shadow-2xl w-64">
+      
+      {/* Profession Key Section */}
+      <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-widest mb-4">Profession Key</h3>
+      <div className="space-y-3 mb-6">
+        {['Studio', 'Producer', 'Director', 'Actor', 'Scriptwriter', 'Other'].map((role) => (
+          <div key={role} className="flex items-center gap-3">
+            <div 
+              className="w-3 h-3 rounded-full border border-white/20" 
+              style={{ backgroundColor: getProfessionColor(role) }} 
+            />
+            <span className="text-xs font-medium text-zinc-300">{role}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* Connection Types Section */}
+      <div className="pt-4 border-t border-zinc-800">
+        <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-widest mb-4">Connection Types</h3>
+        <div className="space-y-4">
+          {/* Endorsed / Worked With */}
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-[6px] bg-red-600 rounded-full" />
+            <span className="text-[11px] font-bold text-white uppercase tracking-tighter">Endorsed</span>
+          </div>
+          
+          {/* Connected / Accepted */}
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-[3px] bg-zinc-500 rounded-full" />
+            <span className="text-[11px] font-bold text-zinc-300 uppercase tracking-tighter">Connected</span>
+          </div>
+          
+          {/* Awaiting / Pending */}
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-[2px] border-t-2 border-dashed border-zinc-700" />
+            <span className="text-[11px] font-bold text-zinc-500 uppercase tracking-tighter italic">Awaiting</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {loading && (
+      <div className="flex h-screen items-center justify-center text-white font-mono animate-pulse">
+        BUILDING CONNECTIONS...
+      </div>
+    )}
+    
+    <svg ref={svgRef} className="h-full w-full cursor-move" />
+    <BottomNav />
+  </div>
+);
 }

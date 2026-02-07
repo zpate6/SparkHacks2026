@@ -20,17 +20,17 @@ export default function SignUpPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
-  const [userType, setUserType] = useState("Studios");
+  const [userType, setUserType] = useState("STUDIO");
   const [floatingItems, setFloatingItems] = useState<Array<{ left: string, delay: string, duration: string }>>([]);
   const router = useRouter();
 
   const USER_TYPES = [
-    "Studios",
-    "Producer",
-    "Directors",
-    "Scriptwriter",
-    "Actors",
-    "Musicians"
+    "STUDIO",
+    "PRODUCER",
+    "DIRECTOR",
+    "SCRIPTWRITER",
+    "ACTOR",
+    "MUSICIAN"
   ];
 
   useEffect(() => {
