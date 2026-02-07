@@ -3,6 +3,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import * as d3 from 'd3';
+import { BottomNav } from '@/components/BottomNav';
 
 // Interfaces matching your GraphDataResponse.java DTOs
 interface GraphNode extends d3.SimulationNodeDatum {
@@ -179,6 +180,7 @@ export default function D3NetworkGraph() {
         </div>
       )}
       <svg ref={svgRef} className="h-full w-full cursor-move" />
+      <BottomNav></BottomNav>
     </div>
   );
 }
