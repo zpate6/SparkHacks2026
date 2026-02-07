@@ -1,454 +1,205 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { Upload, FileText, ChevronLeft, Save, Plus, Trash2, Award } from "lucide-react";
 
-/* ---------- Types ---------- */
+interface Experience {
+  title: string;
+  project: string;
+  year: number;
+}
 
-type ResumeFile = {
-  name: string;
-  url: string;
-};
+export default function EditPortfolioPage() {
+  const [resumeUrl, setResumeUrl] = useState("");
+  const [experience, setExperience] = useState<Experience[]>([]);
+  const [mediaLinks, setMediaLinks] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [skills, setSkills] = useState<string[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
+  
+  const router = useRouter();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-type ExperienceItem = {
-  text: string;
-  images?: string[]; // allow multiple images
-};
-
-/* ---------- Helpers ---------- */
-
-const fileToBase64 = (file: File): Promise<string> =>
-  new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-
-/* ---------- Page ---------- */
-
-export default function PortfolioPage() {
-  const [resume, setResume] = useState<ResumeFile[]>([]);
-  const [experience, setExperience] = useState<ExperienceItem[]>([]);
-  const [genres, setGenres] = useState<string[]>([]);
-  const [connections, setConnections] = useState<string[]>([]);
-
-  const [tempExperience, setTempExperience] = useState("");
-  const [tempGenres, setTempGenres] = useState("");
-  const [tempConnections, setTempConnections] = useState("");
-
-  const resumeInputRef = useRef<HTMLInputElement>(null);
-
-  /* ---------- Load ---------- */
+  // 1. Fetch existing data from Backend
   useEffect(() => {
-    const saved = localStorage.getItem("portfolio");
-    if (saved) {
-      const data = JSON.parse(saved);
-      setResume(data.resume || []);
-      setExperience(data.experience || []);
-      setGenres(data.genres || []);
-      setConnections(data.connections || []);
+    const storedUser = localStorage.getItem("user");
+    if (!storedUser) return router.push("/");
+    const user = JSON.parse(storedUser);
+
+    fetch(`http://localhost:8080/api/users/portfolio/${user.portfolioId}`)
+      .then(res => res.json())
+      .then(data => {
+        setResumeUrl(data.resumeUrl || "");
+        setExperience(data.experience || []);
+        setMediaLinks(data.mediaLinks || []);
+        setSkills(data.skills || []);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, [router]);
+
+  // 2. Handle PDF Resume Upload
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || file.type !== "application/pdf") return alert("Please upload a PDF");
+
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+    const formData = new FormData();
+    formData.append("file", file);
+
+    setIsUploading(true);
+    try {
+      const res = await fetch(`http://localhost:8080/api/users/portfolio/${user.portfolioId}/resume`, {
+        method: "POST",
+        body: formData,
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        setResumeUrl(updated.resumeUrl);
+        alert("Resume Uploaded!");
+      }
+    } finally {
+      setIsUploading(false);
     }
-  }, []);
-
-  /* ---------- Save ---------- */
-  const savePortfolio = (key: string, value: any) => {
-    const saved = localStorage.getItem("portfolio");
-    const data = saved ? JSON.parse(saved) : {};
-    data[key] = value;
-    localStorage.setItem("portfolio", JSON.stringify(data));
   };
 
-  /* ---------- Remove Helper ---------- */
-  const removeItem = <T,>(
-    index: number,
-    list: T[],
-    setList: (v: T[]) => void,
-    key: string
-  ) => {
-    const updated = list.filter((_, i) => i !== index);
-    setList(updated);
-    savePortfolio(key, updated);
+  // 3. Save all information to Backend
+  const saveAll = async () => {
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+    
+    // 1. Save Portfolio (Experience and Links)
+    const portPromise = fetch(`http://localhost:8080/api/users/portfolio/${user.portfolioId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ experience, mediaLinks }),
+    });
+
+    // 2. Save Profile (Skills)
+    // Note: You may need a specific endpoint in UserController.java for profile updates
+    const profPromise = fetch(`http://localhost:8080/api/users/profile/${user.profileId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ skills }), // Only send the skills list
+    });
+
+    await Promise.all([portPromise, profPromise]);
+    alert("Portfolio & Skills Saved!");
+    router.push("/viewPublishedProfilePage");
   };
+
+  if (loading) return <div className="h-screen bg-black flex items-center justify-center text-white">Loading...</div>;
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center bg-black overflow-hidden">
-      {/* Floating background */}
-      <div className="pointer-events-none absolute inset-0">
-        {[...Array(10)].map((_, i) => (
-          <span
-            key={i}
-            className="absolute animate-float text-3xl opacity-20"
-            style={{
-              left: `${Math.random() * 100}%`,
-              animationDelay: `${Math.random() * 10}s`,
-              animationDuration: `${12 + Math.random() * 10}s`,
-            }}
-          >
-            🎬
-          </span>
-        ))}
-      </div>
-
-      {/* Frame */}
-      <div className="relative flex h-[720px] w-[560px] flex-col rounded-[28px] bg-zinc-900 shadow-[0_10px_50px_rgba(220,38,38,0.35)] overflow-hidden">
-
-        {/* Header */}
-        <div className="bg-gradient-to-br from-red-600 to-red-900 px-6 pt-10 pb-5 text-white">
-          <div className="mb-2 text-center text-4xl">🎥</div>
-          <h1 className="text-2xl font-semibold">Your Portfolio</h1>
-        </div>
-
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto px-5 py-4">
-          <div className="grid grid-cols-2 gap-4">
-
-            {/* LEFT */}
-            <div className="flex flex-col gap-4">
-
-              {/* Resume */}
-              <Section title="Resume">
-                <input
-                  ref={resumeInputRef}
-                  type="file"
-                  accept=".pdf,.doc,.docx"
-                  hidden
-                  onChange={async (e) => {
-                    const file = e.target.files?.[0];
-                    if (!file) return;
-                    const url = await fileToBase64(file);
-                    const updated = [...resume, { name: file.name, url }];
-                    setResume(updated);
-                    savePortfolio("resume", updated);
-                  }}
-                />
-
-                <button
-                  onClick={() => resumeInputRef.current?.click()}
-                  className="w-full rounded-lg border border-red-600 py-2 text-sm text-red-500 hover:bg-red-600 hover:text-white transition"
-                >
-                  Upload Resume
-                </button>
-
-                <RemovableList
-                  items={resume.map(r => r.name)}
-                  remove={(i) => removeItem(i, resume, setResume, "resume")}
-                />
-              </Section>
-
-              {/* Experience */}
-              <Section title="Previous Experience">
-                <textarea
-                  value={tempExperience}
-                  onChange={(e) => setTempExperience(e.target.value)}
-                  rows={3}
-                  placeholder="Describe experience..."
-                  className="w-full resize-none rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm text-white"
-                />
-
-                <button
-                  onClick={() => {
-                    if (!tempExperience.trim()) return;
-                    const updated = [...experience, { text: tempExperience.trim(), images: [] }];
-                    setExperience(updated);
-                    setTempExperience("");
-                    savePortfolio("experience", updated);
-                  }}
-                  className="mt-2 w-full rounded-lg border border-red-600 py-2 text-sm text-red-500"
-                >
-                  Add Experience
-                </button>
-
-                <div className="mt-3 space-y-3">
-                  {experience.map((exp, i) => (
-                    <ExperienceCard
-                      key={i}
-                      exp={exp}
-                      onAddImage={async (file) => {
-                        const img = await fileToBase64(file);
-                        const updated = [...experience];
-                        updated[i].images = [...(updated[i].images || []), img];
-                        setExperience(updated);
-                        savePortfolio("experience", updated);
-                      }}
-                      onRemove={() =>
-                        removeItem(i, experience, setExperience, "experience")
-                      }
-                      onRemoveImage={(imgIdx) => {
-                        const updated = [...experience];
-                        updated[i].images = updated[i].images?.filter((_, idx) => idx !== imgIdx);
-                        setExperience(updated);
-                        savePortfolio("experience", updated);
-                      }}
-                    />
-                  ))}
-                </div>
-              </Section>
-
-              {/* Genres */}
-              <Section title="Movie Genres">
-                <input
-                  value={tempGenres}
-                  onChange={(e) => setTempGenres(e.target.value)}
-                  placeholder="Add genre"
-                  className="w-full rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm text-white"
-                />
-                <button
-                  onClick={() => {
-                    if (!tempGenres.trim()) return;
-                    const updated = [...genres, tempGenres.trim()];
-                    setGenres(updated);
-                    setTempGenres("");
-                    savePortfolio("genres", updated);
-                  }}
-                  className="mt-2 w-full rounded-lg border border-red-600 py-2 text-sm text-red-500"
-                >
-                  Add Genre
-                </button>
-
-                <RemovableList
-                  items={genres}
-                  remove={(i) => removeItem(i, genres, setGenres, "genres")}
-                />
-              </Section>
-
-              {/* Connections */}
-              <Section title="Connections">
-                <textarea
-                  value={tempConnections}
-                  onChange={(e) => setTempConnections(e.target.value)}
-                  rows={2}
-                  placeholder="Add connection..."
-                  className="w-full resize-none rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm text-white"
-                />
-                <button
-                  onClick={() => {
-                    if (!tempConnections.trim()) return;
-                    const updated = [...connections, tempConnections.trim()];
-                    setConnections(updated);
-                    setTempConnections("");
-                    savePortfolio("connections", updated);
-                  }}
-                  className="mt-2 w-full rounded-lg border border-red-600 py-2 text-sm text-red-500"
-                >
-                  Add Connection
-                </button>
-
-                <RemovableList
-                  items={connections}
-                  remove={(i) => removeItem(i, connections, setConnections, "connections")}
-                />
-              </Section>
-            </div>
-
-            {/* RIGHT — Preview */}
-            <div className="rounded-xl border border-zinc-800 bg-zinc-950 p-4 overflow-y-auto">
-
-              {/* Resume Preview */}
-              <PreviewBlock title="Resume Files">
-                {resume.length === 0 ? (
-                  <p className="text-xs text-zinc-500">No resumes uploaded</p>
-                ) : (
-                  resume.map((r, i) => (
-                    <p key={i} className="text-xs text-zinc-300">
-                      📄 {r.name}
-                    </p>
-                  ))
-                )}
-              </PreviewBlock>
-
-              {/* Experience Text Preview */}
-              <PreviewBlock title="Experience">
-                {experience.length === 0 ? (
-                  <p className="text-xs text-zinc-500">No experience added</p>
-                ) : (
-                  experience.map((e, i) => (
-                    <p key={i} className="mb-2 text-xs text-zinc-300">
-                      • {e.text}
-                    </p>
-                  ))
-                )}
-              </PreviewBlock>
-
-              {/* Experience Image Gallery */}
-              <PreviewBlock title="Experience Gallery">
-                {experience.filter(e => e.images?.length).length === 0 ? (
-                  <p className="text-xs text-zinc-500">No images uploaded</p>
-                ) : (
-                  <div className="space-y-2">
-                    {experience.map((e, i) =>
-                      e.images?.length ? (
-                        <div key={i}>
-                          <p className="text-xs text-zinc-300 mb-1">• {e.text}</p>
-                          <div className="grid grid-cols-2 gap-2">
-                            {e.images.map((img, idx) => (
-                              <img
-                                key={idx}
-                                src={img}
-                                className="rounded-md border border-zinc-800"
-                              />
-                            ))}
-                          </div>
-                        </div>
-                      ) : null
-                    )}
-                  </div>
-                )}
-              </PreviewBlock>
-
-              {/* Genres Preview */}
-              <PreviewBlock title="Genres">
-                {genres.length === 0 ? (
-                  <p className="text-xs text-zinc-500">No genres added</p>
-                ) : (
-                  <p className="text-xs text-zinc-300">
-                    {genres.join(", ")}
-                  </p>
-                )}
-              </PreviewBlock>
-
-              {/* Connections Preview */}
-              <PreviewBlock title="Connections">
-                {connections.length === 0 ? (
-                  <p className="text-xs text-zinc-500">No connections added</p>
-                ) : (
-                  connections.map((c, i) => (
-                    <p key={i} className="text-xs text-zinc-300">
-                      • {c}
-                    </p>
-                  ))
-                )}
-              </PreviewBlock>
-
-            </div>
-
+    <div className="min-h-screen bg-black text-zinc-300 p-8 font-sans">
+      <div className="max-w-4xl mx-auto space-y-12">
+        <header className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Link href="/homePage" className="p-2 bg-zinc-900 rounded-full hover:bg-zinc-800 transition"><ChevronLeft /></Link>
+            <h1 className="text-3xl font-bold text-white">Edit <span className="text-red-600">Portfolio</span></h1>
           </div>
-        </div>
-
-        {/* Footer */}
-        <div className="flex gap-2">
-          <Link
-            href="/viewPublishedProfilePage"
-            className="flex-1 rounded-full border-2 border-red-600 py-3 text-center font-semibold text-red-500 hover:bg-red-600 hover:text-white transition"
-          >
-            View Published
-          </Link>
-
-          <Link
-            href="/homePage"
-            className="flex-1 rounded-full border-2 border-red-600 py-3 text-center font-semibold text-red-500 hover:bg-red-600 hover:text-white transition"
-          >
-            Home
-          </Link>
-        </div>
-      </div>
-
-      <style jsx global>{`
-        @keyframes float {
-          0% { transform: translateY(110vh); }
-          100% { transform: translateY(-20vh); }
-        }
-        .animate-float {
-          animation: float linear infinite;
-        }
-      `}</style>
-    </div>
-  );
-}
-
-/* ---------- Components ---------- */
-
-function Section({ title, children }: any) {
-  return (
-    <div>
-      <h3 className="mb-1 text-sm font-semibold text-zinc-400">{title}</h3>
-      {children}
-    </div>
-  );
-}
-
-function RemovableList({
-  items,
-  remove,
-}: {
-  items: string[];
-  remove: (i: number) => void;
-}) {
-  return (
-    <ul className="mt-2 text-xs text-zinc-300 space-y-1">
-      {items.map((item, i) => (
-        <li key={i} className="flex justify-between">
-          <span>{item}</span>
-          <button onClick={() => remove(i)} className="text-red-500">
-            ❌
+          <button onClick={saveAll} className="flex items-center gap-2 bg-red-600 text-white px-8 py-3 rounded-full font-bold shadow-lg shadow-red-900/20 hover:bg-red-500 transition">
+            <Save size={18} /> Save Portfolio
           </button>
-        </li>
-      ))}
-    </ul>
-  );
-}
+        </header>
 
-function ExperienceCard({
-  exp,
-  onAddImage,
-  onRemove,
-  onRemoveImage,
-}: {
-  exp: ExperienceItem;
-  onAddImage: (file: File) => void;
-  onRemove: () => void;
-  onRemoveImage: (imgIdx: number) => void;
-}) {
-  return (
-    <div className="rounded-lg border border-zinc-800 p-2 text-xs text-zinc-300">
-      <p>{exp.text}</p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+          <div className="space-y-10">
+            {/* Resume Section */}
+            <section className="bg-zinc-900/50 p-6 rounded-3xl border border-zinc-800">
+              <h3 className="text-zinc-500 text-xs font-bold uppercase tracking-widest mb-6">Resume Document</h3>
+              <input type="file" ref={fileInputRef} hidden accept=".pdf" onChange={handleFileUpload} />
+              <button 
+                onClick={() => fileInputRef.current?.click()}
+                className="w-full h-24 border-2 border-dashed border-zinc-800 rounded-2xl flex flex-col items-center justify-center hover:bg-red-600/5 transition group"
+              >
+                <Upload className={`group-hover:text-red-500 ${isUploading ? 'animate-bounce' : ''}`} />
+                <span className="text-sm mt-2">{isUploading ? 'Uploading...' : 'Upload PDF'}</span>
+              </button>
+              {resumeUrl && <p className="mt-4 text-xs text-zinc-500 truncate">Current: {resumeUrl}</p>}
+            </section>
 
-      {/* Images */}
-      <div className="mt-2 flex flex-wrap gap-2">
-        {exp.images?.map((img, idx) => (
-          <div key={idx} className="relative">
-            <img
-              src={img}
-              className="rounded-md w-16 h-16 object-cover border border-zinc-700"
-            />
-            <button
-              onClick={() => onRemoveImage(idx)}
-              className="absolute -top-2 -right-2 rounded-full bg-red-500 text-white text-[10px] w-4 h-4 flex items-center justify-center"
-            >
-              ❌
-            </button>
+            {/* --- NEW: Skills & Talents Section --- */}
+            <section className="space-y-4">
+              <h3 className="text-zinc-500 text-xs font-bold uppercase tracking-widest flex items-center gap-2">
+                <Award size={14} className="text-red-600"/> Skills & Talents
+              </h3>
+              <div className="flex flex-wrap gap-2 mb-4">
+                {skills.map((skill, i) => (
+                  <div key={i} className="flex items-center gap-2 bg-zinc-900 border border-zinc-800 px-3 py-2 rounded-xl">
+                    <span className="text-sm text-white">{skill}</span>
+                    <button onClick={() => setSkills(skills.filter((_, idx) => idx !== i))} className="text-zinc-500 hover:text-red-500">
+                      <Trash2 size={12}/>
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <div className="flex gap-2">
+                <input 
+                  id="new-skill" 
+                  placeholder="e.g. Method Acting, Singing" 
+                  className="flex-1 bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-sm text-white outline-none focus:border-red-600 transition"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      const val = (e.target as HTMLInputElement).value;
+                      if (val) { setSkills([...skills, val]); (e.target as HTMLInputElement).value = ""; }
+                    }
+                  }}
+                />
+                <button 
+                  onClick={() => {
+                    const el = document.getElementById('new-skill') as HTMLInputElement;
+                    if (el.value) { setSkills([...skills, el.value]); el.value = ""; }
+                  }}
+                  className="p-3 bg-zinc-800 rounded-xl text-red-500 hover:bg-zinc-700"
+                >
+                  <Plus size={18}/>
+                </button>
+              </div>
+            </section>
+
+            {/* Media Links Section */}
+            <section className="space-y-4">
+              <h3 className="text-zinc-500 text-xs font-bold uppercase tracking-widest">Media & Social Links</h3>
+              {mediaLinks.map((link, i) => (
+                <div key={i} className="flex gap-2">
+                  <input value={link} onChange={(e) => {
+                    const next = [...mediaLinks]; next[i] = e.target.value; setMediaLinks(next);
+                  }} className="flex-1 bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-sm text-white" />
+                  <button onClick={() => setMediaLinks(mediaLinks.filter((_, idx) => idx !== i))} className="p-3 text-red-500"><Trash2 size={18}/></button>
+                </div>
+              ))}
+              <button onClick={() => setMediaLinks([...mediaLinks, ""])} className="w-full py-3 border border-zinc-800 rounded-xl text-xs font-bold">+ Add Link</button>
+            </section>
           </div>
-        ))}
+
+          {/* Experience Section */}
+          <section className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h3 className="text-zinc-500 text-xs font-bold uppercase tracking-widest">Professional Experience</h3>
+              <button onClick={() => setExperience([...experience, { title: "", project: "", year: 2026 }])} className="text-red-500 text-xs font-bold">+ Add Role</button>
+            </div>
+            <div className="space-y-4">
+              {experience.map((exp, i) => (
+                <div key={i} className="bg-zinc-900/50 p-5 rounded-2xl border border-zinc-800 space-y-3">
+                  <input placeholder="Job Title" value={exp.title} onChange={e => {
+                    const next = [...experience]; next[i].title = e.target.value; setExperience(next);
+                  }} className="w-full bg-transparent text-sm font-bold text-white outline-none" />
+                  <div className="flex gap-4">
+                    <input placeholder="Project" value={exp.project} onChange={e => {
+                      const next = [...experience]; next[i].project = e.target.value; setExperience(next);
+                    }} className="flex-1 bg-transparent text-xs text-zinc-400 outline-none" />
+                    <input type="number" value={exp.year} onChange={e => {
+                      const next = [...experience]; next[i].year = parseInt(e.target.value); setExperience(next);
+                    }} className="w-16 bg-transparent text-xs text-zinc-400 outline-none text-right" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        </div>
       </div>
-
-      <div className="mt-2 flex justify-between items-center">
-        <label className="cursor-pointer text-red-500">
-          Upload Image
-          <input
-            type="file"
-            accept="image/*"
-            hidden
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) onAddImage(file);
-            }}
-          />
-        </label>
-
-        <button onClick={onRemove} className="text-red-500">
-          ❌ Experience
-        </button>
-      </div>
-    </div>
-  );
-}
-
-function PreviewBlock({ title, children }: any) {
-  if (!children) return null;
-  return (
-    <div className="mb-4">
-      <h4 className="mb-1 text-sm font-semibold text-red-500">{title}</h4>
-      {children}
     </div>
   );
 }

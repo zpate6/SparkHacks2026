@@ -14,11 +14,10 @@ public class Portfolio {
     private List<Experience> experience;
     private List<String> mediaLinks;
 
+    @Data
     public static class Experience {
         private String title;
         private String project;
         private int year;
-        // Getters and Setters
     }
-    // Getters and Setters
 }

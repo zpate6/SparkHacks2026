@@ -7,7 +7,12 @@ import com.SparkHacks2026.SparkHacks2026.repositories.ProfileRepository;
 import com.SparkHacks2026.SparkHacks2026.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Optional;
 import java.util.List;
 
@@ -53,10 +58,8 @@ public class UserController {
         User user = new User();
         user.setAuthId(auth.getId());
         user.setProfileId(profile.getId());
-        user.setProfileId(portfolio.getId());
+        user.setPortfolioId(portfolio.getId());
         user.setStatus("ACTIVE");
-
-
 
         return userRepository.save(user);
     }
@@ -85,5 +88,40 @@ public class UserController {
     public Portfolio getPortfolio(@PathVariable String id) {
         return portfolioRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Portfolio not found"));
+    }
+
+    @PutMapping("/portfolio/{id}")
+    public Portfolio updatePortfolio(@PathVariable String id, @RequestBody Portfolio data) {
+        return portfolioRepository.findById(id).map(p -> {
+            p.setExperience(data.getExperience());
+            p.setMediaLinks(data.getMediaLinks());
+            return portfolioRepository.save(p);
+        }).orElseThrow();
+    }
+
+    // Handle Multipart PDF upload
+    @PostMapping("/portfolio/{id}/resume")
+    public Portfolio uploadResume(@PathVariable String id, @RequestParam("file") MultipartFile file) throws IOException {
+        Portfolio p = portfolioRepository.findById(id).orElseThrow();
+
+        // 1. Define storage path (In a real app, use AWS S3 or a dedicated file server)
+        String fileName = System.currentTimeMillis() + "_" + file.getOriginalFilename();
+        Path path = Paths.get("uploads").toAbsolutePath().resolve(fileName);
+        Files.createDirectories(path.getParent());
+        Files.write(path, file.getBytes());
+
+        // 2. Update the portfolio with the file path or access URL
+        p.setResumeUrl("/api/uploads/" + fileName);
+        return portfolioRepository.save(p);
+    }
+
+    @PutMapping("/profile/{profileId}")
+    public Profile updateProfile(@PathVariable String profileId, @RequestBody Profile updatedData) {
+        return profileRepository.findById(profileId).map(profile -> {
+            profile.setSkills(updatedData.getSkills());
+            profile.setGenres(updatedData.getGenres());
+            // Add any other fields from Profile.java you want to be editable
+            return profileRepository.save(profile);
+        }).orElseThrow(() -> new RuntimeException("Profile not found"));
     }
 }
