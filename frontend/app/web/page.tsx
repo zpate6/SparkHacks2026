@@ -88,8 +88,11 @@ export default function D3NetworkGraph() {
       .join("line")
       .attr("stroke", "#555")
       .attr("stroke-opacity", 0.6)
+      .attr("stroke", d => d.type === 'ENDORSED' ? "#dc2626" : "#555")
+      .attr("stroke-opacity", d => d.type === 'ENDORSED' ? 0.8 : 0.6)
       // VARYING THICKNESS LOGIC
       .attr("stroke-width", d => {
+        if (d.type === 'ENDORSED') return 4;
         if (d.status === 'ACCEPTED') return 3;  // Connected
         return 1.5;                             // Awaiting/Pending
       })

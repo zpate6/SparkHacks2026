@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 public class ConnectionService {
     @Autowired private ConnectionRepository connectionRepository;
     @Autowired private ProfileRepository profileRepository;
-    @Autowired private UserRepository userRepository;
+    @Autowired private EndorsementRepository endorsementRepository;
     @Autowired private QueueRepository queueRepository;
     @Autowired private AnalyticsRepository analyticsRepository;
 
@@ -149,48 +149,129 @@ public class ConnectionService {
         return path;
     }
 
-    public GraphDataResponse getNetworkGraph() {
-        // 1. Fetch all connections (including PENDING)
-        List<Connection> connections = connectionRepository.findAll();
 
-        // 2. Extract unique Profile IDs directly from the connections
-        Set<String> profileIds = new HashSet<>();
-        for (Connection c : connections) {
-            profileIds.addAll(c.getUsers()); // These are profileIds
+    public GraphDataResponse getNetworkGraph() {
+        // 1. Fetch data
+        List<Connection> connections = connectionRepository.findAll();
+        List<Endorsement> endorsements = endorsementRepository.findAll();
+
+        // 2. Build a "Lookup Set" for Endorsed Pairs
+        // We sort the IDs so (A, B) is treated the same as (B, A)
+        Set<String> endorsedPairs = new HashSet<>();
+        for (Endorsement e : endorsements) {
+            if (e.getEndorserId() != null && e.getEndorseeId() != null) {
+                List<String> pair = Arrays.asList(e.getEndorserId(), e.getEndorseeId());
+                Collections.sort(pair);
+                endorsedPairs.add(pair.get(0) + "_" + pair.get(1));
+            }
         }
 
-        // 3. Fetch the corresponding Profiles directly
-        List<Profile> profiles = profileRepository.findAllById(profileIds);
-        Map<String, Profile> profileMap = profiles.stream()
-                .collect(Collectors.toMap(Profile::getId, p -> p));
+        // 3. Build Nodes
+        Set<String> profileIds = new HashSet<>();
+        for (Connection c : connections) {
+            profileIds.addAll(c.getUsers());
+        }
 
-        // 4. Build the Nodes for D3
+        List<Profile> profiles = profileRepository.findAllById(profileIds);
         List<GraphDataResponse.Node> nodes = new ArrayList<>();
         for (Profile profile : profiles) {
             nodes.add(new GraphDataResponse.Node(
-                    profile.getId(), // Using profileId as the unique node ID
+                    profile.getId(),
                     profile.getFirstName() + " " + profile.getLastName(),
                     profile.getProfession()));
         }
 
-        // 5. Build the Links
-        // Ensure both source and target profileIds exist in our node list
         Set<String> validProfileIds = nodes.stream()
                 .map(GraphDataResponse.Node::getId)
                 .collect(Collectors.toSet());
 
+        // 4. Build Links (Checking Endorsement Status)
         List<GraphDataResponse.Link> links = connections.stream()
-                .filter(c -> validProfileIds.contains(c.getUsers().get(0)) &&
+                .filter(c -> c.getUsers().size() >= 2 &&
+                             validProfileIds.contains(c.getUsers().get(0)) &&
                              validProfileIds.contains(c.getUsers().get(1)))
-                .map(c -> new GraphDataResponse.Link(
-                        c.getUsers().get(0), // profileId 1
-                        c.getUsers().get(1), // profileId 2
-                        c.getRelationshipType(),
-                        c.getStatus())) // "PENDING" or "ACCEPTED"
+                .map(c -> {
+                    String u1 = c.getUsers().get(0);
+                    String u2 = c.getUsers().get(1);
+
+                    // Generate the same sorted key to check against the set
+                    List<String> pair = Arrays.asList(u1, u2);
+                    Collections.sort(pair);
+                    String key = pair.get(0) + "_" + pair.get(1);
+
+                    // Default type from connection
+                    String type = c.getRelationshipType();
+
+                    // OVERRIDE if endorsement exists
+                    if (endorsedPairs.contains(key)) {
+                        type = "ENDORSED";
+                    }
+
+                    return new GraphDataResponse.Link(
+                            u1,
+                            u2,
+                            type,
+                            c.getStatus());
+                })
                 .collect(Collectors.toList());
 
         return new GraphDataResponse(nodes, links);
     }
+
+//    public GraphDataResponse getNetworkGraph() {
+//        // 1. Fetch all connections (including PENDING)
+//        List<Connection> connections = connectionRepository.findAll();
+//        List<Endorsement> endorsements = endorsementRepository.findAll();
+//
+//        // 2. Extract unique Profile IDs directly from the connections
+//        Set<String> profileIds = new HashSet<>();
+//        for (Connection c : connections) {
+//            profileIds.addAll(c.getUsers()); // These are profileIds
+//        }
+//
+//        // 3. Fetch the corresponding Profiles directly
+//        List<Profile> profiles = profileRepository.findAllById(profileIds);
+//        Map<String, Profile> profileMap = profiles.stream()
+//                .collect(Collectors.toMap(Profile::getId, p -> p));
+//
+//        // 4. Build the Nodes for D3
+//        List<GraphDataResponse.Node> nodes = new ArrayList<>();
+//        for (Profile profile : profiles) {
+//            nodes.add(new GraphDataResponse.Node(
+//                    profile.getId(), // Using profileId as the unique node ID
+//                    profile.getFirstName() + " " + profile.getLastName(),
+//                    profile.getProfession()));
+//        }
+//
+//        // 5. Build the Links
+//        // Ensure both source and target profileIds exist in our node list
+//        Set<String> validProfileIds = nodes.stream()
+//                .map(GraphDataResponse.Node::getId)
+//                .collect(Collectors.toSet());
+//
+//        List<GraphDataResponse.Link> links = connections.stream()
+//                .filter(c -> validProfileIds.contains(c.getUsers().get(0)) &&
+//                             validProfileIds.contains(c.getUsers().get(1)))
+//                .map(c -> new GraphDataResponse.Link(
+//                        c.getUsers().get(0), // profileId 1
+//                        c.getUsers().get(1), // profileId 2
+//                        c.getRelationshipType(),
+//                        c.getStatus())) // "PENDING" or "ACCEPTED"
+//                .collect(Collectors.toList());
+//
+//        for (Endorsement e : endorsements) {
+//            if (validIds.contains(e.getEndorserId()) && validIds.contains(e.getEndorseeId())) {
+//                links.add(new GraphDataResponse.Link(
+//                        e.getEndorserId(),
+//                        e.getEndorseeId(),
+//                        "ENDORSED", // Distinct Type
+//                        "ACCEPTED"
+//                ));
+//            }
+//        }
+//
+//        return new GraphDataResponse(nodes, links);
+//    }
 
 
     private double calculatePriority(String reqId, String targetId) {
