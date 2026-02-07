@@ -57,76 +57,88 @@ public class ConnectionService {
         }
     }
 
-    // Finds the shortest path (up to 7 degrees) between two users
     public List<Map<String, String>> findConnectionPath(String fromProfileId, String toProfileId) {
-        // 1. Resolve Profile IDs to User IDs
-        User startUser = userRepository.findByProfileId(fromProfileId).orElse(null);
-        User targetUser = userRepository.findByProfileId(toProfileId).orElse(null);
+        if (fromProfileId == null || toProfileId == null || fromProfileId.equals(toProfileId)) {
+            return Collections.emptyList();
+        }
 
-        if (startUser == null || targetUser == null) return Collections.emptyList();
-
-        String startUserId = startUser.getId();
-        String targetUserId = targetUser.getId();
-
-        if (startUserId.equals(targetUserId)) return Collections.emptyList();
-
+        // 1. Setup BFS
         LinkedList<String> queue = new LinkedList<>();
         Map<String, String> predecessors = new HashMap<>();
         Set<String> visited = new HashSet<>();
 
-        queue.add(startUserId);
-        visited.add(startUserId);
+        queue.add(fromProfileId);
+        visited.add(fromProfileId);
 
-        int depth = 0;
         boolean found = false;
-        while (!queue.isEmpty() && depth < 10) {
-            int levelSize = queue.size();
-            for (int i = 0; i < levelSize; i++) {
-                String current = queue.poll();
+        while (!queue.isEmpty()) {
+            String current = queue.poll();
 
-                // Get all accepted neighbors
-                List<String> neighbors = getAcceptedNeighbors(current);
+            // 2. Fetch Neighbors
+            List<String> neighbors = getProfileNeighbors(current);
 
-                for (String neighbor : neighbors) {
-                    if (!visited.contains(neighbor)) {
-                        visited.add(neighbor);
-                        predecessors.put(neighbor, current);
+            for (String neighbor : neighbors) {
+                if (!visited.contains(neighbor)) {
+                    visited.add(neighbor);
+                    predecessors.put(neighbor, current);
 
-                        if (neighbor.equals(targetUserId)) {
-                            found = true;
-                            break;
-                        }
-                        queue.add(neighbor);
+                    if (neighbor.equals(toProfileId)) {
+                        found = true;
+                        break;
                     }
+                    queue.add(neighbor);
                 }
-                if (found) break;
             }
             if (found) break;
-            depth++;
         }
+
         if (!found) return Collections.emptyList();
 
-        // 3. Reconstruct Path and attach Profile Names
-        List<String> userPath = reconstructPath(predecessors, targetUserId);
+        // 3. Reconstruct Path
+        List<String> path = reconstructPath(predecessors, toProfileId);
         List<Map<String, String>> result = new ArrayList<>();
 
-        for (String uid : userPath) {
-            User u = userRepository.findById(uid).orElse(null);
-            Profile p = (u != null) ? profileRepository.findById(u.getProfileId()).orElse(null) : null;
-
+        // 4. Build Response (With Fallback for missing Profiles)
+        for (String pid : path) {
             Map<String, String> node = new HashMap<>();
-            node.put("id", uid);
-            node.put("name", p != null ? p.getFirstName() + " " + p.getLastName() : "Unknown");
+            node.put("id", pid);
+
+            // Try to look up the profile, but don't skip the node if missing
+            Optional<Profile> pOpt = profileRepository.findById(pid);
+            if (pOpt.isPresent()) {
+                Profile p = pOpt.get();
+                node.put("name", p.getFirstName() + " " + p.getLastName());
+                node.put("profession", p.getProfession());
+            } else {
+                // Fallback so the graph still draws
+                node.put("name", "User " + pid.substring(0, 4) + "...");
+                node.put("profession", "Unknown");
+            }
             result.add(node);
         }
         return result;
     }
 
-    private List<String> getAcceptedNeighbors(String userId) {
-        return connectionRepository.findByUsersContaining(userId).stream()
-                .filter(c -> "ACCEPTED".equals(c.getStatus()))
-                .map(c -> c.getUsers().get(0).equals(userId) ? c.getUsers().get(1) : c.getUsers().get(0))
-                .collect(Collectors.toList());
+    // Helper to find all Profile IDs connected to the given profileId
+    private List<String> getProfileNeighbors(String profileId) {
+        // Use the explicit status query to only traverse ACCEPTED matches
+        List<Connection> connections = connectionRepository.findByUsersContainingAndStatus(profileId, "ACCEPTED");
+
+        List<String> neighbors = new ArrayList<>();
+        for (Connection c : connections) {
+            List<String> users = c.getUsers();
+            // Safety check
+            if (users != null && users.contains(profileId)) {
+                for (String u : users) {
+                    // Add the user that is NOT me
+                    if (!u.equals(profileId)) {
+                        neighbors.add(u);
+                    }
+                }
+            }
+        }
+        // Deduplicate in case of data errors
+        return neighbors.stream().distinct().collect(Collectors.toList());
     }
 
     private List<String> reconstructPath(Map<String, String> predecessors, String target) {
