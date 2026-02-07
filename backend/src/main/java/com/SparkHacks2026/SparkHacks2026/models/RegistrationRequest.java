@@ -10,4 +10,5 @@ public class RegistrationRequest {
     private String lastName;
     private String profession;
     private String zipcode;
+    private String image;
 }
