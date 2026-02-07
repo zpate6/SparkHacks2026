@@ -1,240 +1,128 @@
+// app/portfolioPage/[id]/page.tsx
 "use client";
 
-import { useEffect, useState } from 'react';
-import { User } from '@/types';
-import { getAllUsers } from '@/lib/api';
+import { use, useEffect, useState } from "react";
+import Link from "next/link";
 
-export default function UsersPage() {
-  const [users, setUsers] = useState<User[]>([]);
+type Props = {
+  params: Promise<{ id: string }>;
+};
+
+interface PortfolioData {
+  resumeUrl: string;
+  experience: Array<{ title: string; project: string; year: number }>;
+  mediaLinks: string[];
+}
+
+interface ProfileData {
+  firstName: string;
+  lastName: string;
+  profession: string;
+}
+
+export default function ViewPortfolioPage({ params }: Props) {
+  const { id } = use(params); // The profileId from the URL
+  const [portfolio, setPortfolio] = useState<PortfolioData | null>(null);
+  const [profile, setProfile] = useState<ProfileData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  
-  // Replace with a real user ID from your session later
-  const currentTestUserId = "698763b17cabdcf990b901e4"; 
 
   useEffect(() => {
-    getAllUsers()
-      .then((data) => {
-        setUsers(data);
-        setLoading(false);
-      })
-      .catch((err) => {
-        setError(err.message);
-        setLoading(false);
-      });
-  }, []);
-
-  const handleManualConnect = async (targetUserId: string) => {
+  async function fetchData() {
     try {
-      const response = await fetch(
-        `http://localhost:8080/api/connections/test/manual?user1=${currentTestUserId}&user2=${targetUserId}&status=ACCEPTED`, 
-        { method: 'POST' }
-      );
-      if (response.ok) {
-        alert(`Successfully created connection with ${targetUserId}`);
-      }
-    } catch (err) {
-      alert("Failed to create test connection");
-    }
-  };
+      // 1. Fetch Profile for names/role
+      const profileRes = await fetch(`http://localhost:8080/api/users/profile/${id}`);
+      const profileData = await profileRes.json();
+      setProfile(profileData);
 
-  if (loading) return <p>Loading SparkHacks Users...</p>;
-  if (error) return <p className="text-red-500">Error: {error}</p>;
+      // 2. Fetch User by profileId to get the portfolioId
+      const userRes = await fetch(`http://localhost:8080/api/users/by-profile/${id}`);
+      const userData = await userRes.json();
+
+      // 3. Safety Check: If portfolioId is null, don't fetch and show a default state
+      if (!userData.portfolioId) {
+        console.warn("User has no portfolioId assigned.");
+        setLoading(false);
+        return;
+      }
+
+      // 4. Fetch actual Portfolio using the ID from User
+      const portfolioRes = await fetch(`http://localhost:8080/api/portfolios/${userData.portfolioId}`);
+      const portfolioData = await portfolioRes.json();
+      setPortfolio(portfolioData);
+      
+    } catch (err) {
+      console.error("Failed to load portfolio data:", err);
+    } finally {
+      setLoading(false);
+    }
+  }
+  fetchData();
+}, [id]);
+
+  if (loading) return <div className="min-h-screen bg-black text-white flex items-center justify-center">Loading Portfolio...</div>;
 
   return (
-    <div className="p-8">
-      <h1 className="text-2xl font-bold mb-4">Network Users (Test Panel)</h1>
-      <ul className="space-y-4">
-        {users.map((user) => (
-          <li key={user.id} className="p-4 border rounded shadow-sm flex justify-between items-center">
-            <div>
-              <p className="font-mono text-sm">ID: {user.id}</p>
-              <p className="font-mono text-sm">name: {user.id}</p>
-              <p>Status: <span className={user.status === 'ACTIVE' ? 'text-green-600' : 'text-gray-500'}>
-                {user.status}
-              </span></p>
+    <div className="relative min-h-screen bg-black text-zinc-300 font-sans p-6">
+      {/* Decorative Background */}
+      <div className="absolute top-0 left-0 w-full h-64 bg-gradient-to-b from-red-900/20 to-transparent" />
+
+      <div className="relative max-w-4xl mx-auto pt-12">
+        {/* Header Section */}
+        <div className="flex items-center justify-between mb-12">
+          <div>
+            <h1 className="text-5xl font-bold text-white mb-2">
+              {profile?.firstName} {profile?.lastName}
+            </h1>
+            <p className="text-red-500 text-xl font-medium tracking-wide uppercase">
+              {profile?.profession}
+            </p>
+          </div>
+          <Link href="/homePage" className="px-6 py-2 border border-zinc-700 rounded-full hover:bg-zinc-800 transition">
+            Back to Discovery
+          </Link>
+        </div>
+
+        {/* Content Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+          {/* Main Info */}
+          <div className="md:col-span-2 space-y-12">
+            <section>
+              <h3 className="text-zinc-500 text-sm font-bold uppercase mb-4 tracking-widest">Resume Summary</h3>
+              <p className="text-lg leading-relaxed text-zinc-200">
+                {portfolio?.resumeUrl || "Professional resume details are currently being updated by the user."}
+              </p>
+            </section>
+
+            <section>
+              <h3 className="text-zinc-500 text-sm font-bold uppercase mb-6 tracking-widest">Experience</h3>
+              <div className="space-y-6">
+                {portfolio?.experience?.map((exp, i) => (
+                  <div key={i} className="border-l-2 border-red-600 pl-6 py-1">
+                    <h4 className="text-white font-bold text-lg">{exp.title}</h4>
+                    <p className="text-zinc-400">{exp.project} • {exp.year}</p>
+                  </div>
+                )) || <p className="text-zinc-500 italic">No experience listed yet.</p>}
+              </div>
+            </section>
+          </div>
+
+          {/* Sidebar / Links */}
+          <div className="space-y-8">
+            <div className="p-6 bg-zinc-900 rounded-3xl border border-zinc-800">
+              <h3 className="text-white font-bold mb-4">Media & Links</h3>
+              <ul className="space-y-3">
+                {portfolio?.mediaLinks?.map((link, i) => (
+                  <li key={i}>
+                    <a href={link} target="_blank" className="text-red-400 hover:text-red-300 text-sm break-all">
+                      {link}
+                    </a>
+                  </li>
+                )) || <p className="text-zinc-500 text-xs">No external links available.</p>}
+              </ul>
             </div>
-            {user.id !== currentTestUserId && (
-              <button 
-                onClick={() => handleManualConnect(user.id)}
-                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
-              >
-                Create Test Connection
-              </button>
-            )}
-          </li>
-        ))}
-      </ul>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
-
-// import { use, useEffect, useState } from "react";
-// import Link from "next/link";
-// import { clear } from "console";
-
-// type Props = {
-//   params: Promise<{ id: string }>;
-// };
-
-// export default function PortfolioPage({params}: Props) {
-//   const [resume, setResume] = useState("");
-//   const [experience, setExperience] = useState("");
-//   const [genres, setGenres] = useState("");
-//   const [connections, setConnections] = useState("");
-//   const {id} = use(params);
-
-//   // Load saved portfolio
-//   useEffect(() => {
-//     const saved = localStorage.getItem("portfolio");
-//     if (saved) {
-//       const data = JSON.parse(saved);
-//       setResume(data.resume || "");
-//       setExperience(data.experience || "");
-//       setGenres(data.genres || "");
-//       setConnections(data.connections || "");
-//     }
-//   }, []);
-
-//   // Save on change
-//   useEffect(() => {
-//     localStorage.setItem(
-//       "portfolio",
-//       JSON.stringify({ resume, experience, genres, connections })
-//     );
-//   }, [resume, experience, genres, connections]);
-
-//   return (
-//     <div className="relative flex min-h-screen items-center justify-center bg-black overflow-hidden">
-//       {/* Floating background */}
-//       <div className="pointer-events-none absolute inset-0">
-//         {[...Array(10)].map((_, i) => (
-//           <span
-//             key={i}
-//             className="absolute animate-float text-3xl opacity-20"
-//             style={{
-//               left: `${Math.random() * 100}%`,
-//               animationDelay: `${Math.random() * 10}s`,
-//               animationDuration: `${12 + Math.random() * 10}s`,
-//             }}
-//           >
-//             🎬
-//           </span>
-//         ))}
-//       </div>
-
-//       {/* Phone Frame */}
-//       <div className="relative h-[720px] w-[560px] rounded-[28px] bg-zinc-900 shadow-[0_10px_50px_rgba(220,38,38,0.35)] overflow-hidden">
-//         {/* Header */}
-//         <div className="bg-gradient-to-br from-red-600 to-red-900 px-6 pt-10 pb-5 text-white">
-//           <div className="mb-2 text-center text-4xl">🎥</div>
-//           <h1 className="text-2xl font-semibold">Your Portfolio : {id}</h1>
-//           <p className="text-sm text-white/90">
-//             Edit and view your professional profile
-//           </p>
-//         </div>
-
-//         {/* Split View */}
-//         <div className="grid grid-cols-2 gap-4 px-5 py-4 h-[580px]">
-//           {/* LEFT — Edit */}
-//           <div className="flex flex-col gap-3 overflow-y-auto pr-2">
-//             <Section title="Resume">
-//               <Textarea value={resume} setValue={setResume} placeholder="Paste or write your resume..." />
-//             </Section>
-
-//             <Section title="Previous Experience">
-//               <Textarea value={experience} setValue={setExperience} placeholder="Past projects, roles, studios..." />
-//             </Section>
-
-//             <Section title="Movie Genres">
-//               <Input value={genres} setValue={setGenres} placeholder="Drama, Action, Indie..." />
-//             </Section>
-
-//             <Section title="Connections">
-//               <Textarea value={connections} setValue={setConnections} placeholder="Who you know & how you're connected" />
-//             </Section>
-//           </div>
-
-//           {/* RIGHT — Live Preview */}
-//           <div className="rounded-xl border border-zinc-800 bg-zinc-950 p-4 overflow-y-auto">
-//             <PreviewBlock title="Resume" content={resume} />
-//             <PreviewBlock title="Experience" content={experience} />
-//             <PreviewBlock title="Genres" content={genres} />
-//             <PreviewBlock title="Connections" content={connections} />
-//           </div>
-//         </div>
-
-//         {/* Footer */}
-//         <div className="absolute bottom-0 left-0 right-0 px-6 pb-4">
-//           <Link
-//             href="/homePage"
-//             className="block w-full rounded-full border-2 border-red-600 py-3 text-center font-semibold text-red-500 hover:bg-red-600 hover:text-white transition"
-//           >
-//             Back to Home
-//           </Link>
-//         </div>
-//       </div>
-
-//       {/* Animation */}
-//       <style jsx global>{`
-//         @keyframes float {
-//           0% {
-//             transform: translateY(110vh);
-//           }
-//           100% {
-//             transform: translateY(-20vh);
-//           }
-//         }
-//         .animate-float {
-//           animation: float linear infinite;
-//         }
-//       `}</style>
-//     </div>
-//   );
-// }
-
-// /* ---------- Components ---------- */
-
-// function Section({ title, children }: any) {
-//   return (
-//     <div>
-//       <h3 className="mb-1 text-sm font-semibold text-zinc-400">{title}</h3>
-//       {children}
-//     </div>
-//   );
-// }
-
-// function Input({ value, setValue, placeholder }: any) {
-//   return (
-//     <input
-//       value={value}
-//       onChange={(e) => setValue(e.target.value)}
-//       placeholder={placeholder}
-//       className="w-full rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm text-white outline-none focus:border-red-600"
-//     />
-//   );
-// }
-
-// function Textarea({ value, setValue, placeholder }: any) {
-//   return (
-//     <textarea
-//       value={value}
-//       onChange={(e) => setValue(e.target.value)}
-//       placeholder={placeholder}
-//       rows={4}
-//       className="w-full resize-none rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm text-white outline-none focus:border-red-600"
-//     />
-//   );
-// }
-
-// function PreviewBlock({ title, content }: any) {
-//   if (!content) return null;
-//   return (
-//     <div className="mb-4">
-//       <h4 className="mb-1 text-sm font-semibold text-red-500">{title}</h4>
-//       <p className="text-xs whitespace-pre-wrap text-zinc-300">
-//         {content}
-//       </p>
-//     </div>
-//   );
-// }

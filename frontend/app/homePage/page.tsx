@@ -196,8 +196,31 @@ export default function HomePage() {
         </aside>
       </div>
 
-      <nav className="border-t border-zinc-800 bg-zinc-950 px-6 py-4">
-        {/* Navigation list remains same */}
+      {/* Bottom Nav */}
+      <nav className="border-t border-zinc-800 bg-zinc-950 px-6 py-4 pb-8 md:pb-4">
+        <ul className="flex items-center justify-around">
+          <li>
+            <Link href="/homePage" className="flex flex-col items-center gap-1 text-red-600">
+              <Film size={24} strokeWidth={2.5} />
+            </Link>
+          </li>
+          {/* this is the star */}
+          {/* <li>
+            <button className="flex flex-col items-center gap-1 text-zinc-500 hover:text-zinc-300 transition">
+              <Star size={24} />
+            </button>
+          </li> */}
+          <li>
+            <Link href="/communicationPage" className="flex flex-col items-center gap-1 text-zinc-500 hover:text-zinc-300 transition">
+              <MessageCircle size={24} />
+            </Link>
+          </li>
+          <li>
+            <Link href="/portfolioPage" className="flex flex-col items-center gap-1 text-zinc-500 hover:text-zinc-300 transition">
+              <User size={24} />
+            </Link>
+          </li>
+        </ul>
       </nav>
     </div>
   );
