@@ -17,6 +17,7 @@ public class Profile {
     private String zipcode;
     private List<String> skills;
     private List<String> genres;
+    private String image;
     private PreferredPay preferredPay;
 
     public static class PreferredPay {
