@@ -251,7 +251,7 @@ export default function HomePage() {
                         
                 {/* Call to action */}
                 <div className="pt-4">
-                  <Link href={`/portfolioPage/${currentProfile!.id}`} className="block w-full text-center py-4 bg-zinc-800 hover:bg-zinc-700 rounded-2xl border border-zinc-700 transition font-bold">
+                  <Link href={`/portfolio/${currentProfile!.id}`} className="block w-full text-center py-4 bg-zinc-800 hover:bg-zinc-700 rounded-2xl border border-zinc-700 transition font-bold">
                     View Full Portfolio
                   </Link>
                 </div>
