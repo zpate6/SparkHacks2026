@@ -2,6 +2,7 @@ package com.SparkHacks2026.SparkHacks2026.controllers;
 
 import com.SparkHacks2026.SparkHacks2026.models.*;
 import com.SparkHacks2026.SparkHacks2026.repositories.AuthRepository;
+import com.SparkHacks2026.SparkHacks2026.repositories.PortfolioRepository;
 import com.SparkHacks2026.SparkHacks2026.repositories.ProfileRepository;
 import com.SparkHacks2026.SparkHacks2026.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,14 +16,10 @@ import java.util.List;
 @CrossOrigin(origins = "*") // Allows your frontend to connect
 public class UserController {
 
-    @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private AuthRepository authRepository;
-
-    @Autowired
-    private ProfileRepository profileRepository;
+    @Autowired private UserRepository userRepository;
+    @Autowired private AuthRepository authRepository;
+    @Autowired private ProfileRepository profileRepository;
+    @Autowired private PortfolioRepository portfolioRepository;
 
     // GET all users
     @GetMapping
@@ -68,5 +65,11 @@ public class UserController {
     @GetMapping("/profile/{profileId}")
     public Profile getProfile(@PathVariable String profileId) {
         return profileRepository.findById(profileId).orElseThrow(() -> new RuntimeException("Profile not found"));
+    }
+
+    @GetMapping("/portfolio/{id}")
+    public Portfolio getPortfolio(@PathVariable String id) {
+        return portfolioRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Portfolio not found"));
     }
 }
