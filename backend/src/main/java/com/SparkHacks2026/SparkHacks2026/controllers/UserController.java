@@ -1,15 +1,13 @@
 package com.SparkHacks2026.SparkHacks2026.controllers;
 
-import com.SparkHacks2026.SparkHacks2026.models.Auth;
-import com.SparkHacks2026.SparkHacks2026.models.Profile;
-import com.SparkHacks2026.SparkHacks2026.models.RegistrationRequest;
-import com.SparkHacks2026.SparkHacks2026.models.User;
+import com.SparkHacks2026.SparkHacks2026.models.*;
 import com.SparkHacks2026.SparkHacks2026.repositories.AuthRepository;
 import com.SparkHacks2026.SparkHacks2026.repositories.ProfileRepository;
 import com.SparkHacks2026.SparkHacks2026.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Optional;
 import java.util.List;
 
 @RestController
@@ -38,7 +36,7 @@ public class UserController {
         // 1. Create and save Auth document
         Auth auth = new Auth();
         auth.setEmail(request.getEmail());
-        auth.setPasswordHash( request.getPassword()); // Add hashing logic
+        auth.setPasswordHash(request.getPassword()); // Add hashing logic
         auth = authRepository.save(auth);
 
         // 2. Create and save Profile document
@@ -56,5 +54,19 @@ public class UserController {
         user.setStatus("ACTIVE");
 
         return userRepository.save(user);
+    }
+
+    @PostMapping("/login")
+    public User login(@RequestBody LoginRequest request) {
+        Auth auth = authRepository.findByEmail(request.getEmail());
+        if (auth != null && auth.getPasswordHash().equals(request.getPassword())) {
+            return userRepository.findByAuthId(auth.getId());
+        }
+        throw new RuntimeException("Invalid credentials");
+    }
+
+    @GetMapping("/profile/{profileId}")
+    public Profile getProfile(@PathVariable String profileId) {
+        return profileRepository.findById(profileId).orElseThrow(() -> new RuntimeException("Profile not found"));
     }
 }

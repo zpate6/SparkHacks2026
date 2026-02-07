@@ -10,5 +10,6 @@ import java.util.List;
 public interface UserRepository extends MongoRepository<User, String> {
     // Custom query to find by status
     List<User> findByStatus(String status);
-}
 
+    User findByAuthId(String authId);
+}

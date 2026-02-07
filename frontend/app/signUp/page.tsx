@@ -63,6 +63,14 @@ export default function SignUpPage() {
       });
 
       if (response.ok) {
+        const data = await response.json();
+        localStorage.setItem(
+          "user",
+          JSON.stringify({
+            ...data,
+            type: "login",
+          })
+        );
         alert('User created successfully!');
         router.push('/homePage'); // Redirect to swiping home page
       }
@@ -110,7 +118,7 @@ export default function SignUpPage() {
             <div className="relative">
               <select
                 value={formData["profession"]}
-                onChange={(e) => setFormData({...formData, profession: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, profession: e.target.value })}
                 className="w-full appearance-none rounded-xl border-2 border-zinc-800 bg-zinc-900 px-4 py-3 text-white outline-none focus:border-red-600"
               >
                 {USER_TYPES.map((type) => (
@@ -134,7 +142,7 @@ export default function SignUpPage() {
             <input
               placeholder="First Name"
               value={formData.firstName}
-              onChange={(e) => setFormData({...formData, firstName: e.target.value})}
+              onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
               className="rounded-xl border-2 border-zinc-800 bg-zinc-900 px-4 py-3 text-white outline-none focus:border-red-600"
             />
           </div>
@@ -146,11 +154,11 @@ export default function SignUpPage() {
             <input
               placeholder="Last Name"
               value={formData.lastName}
-              onChange={(e) => setFormData({...formData, lastName: e.target.value})}
+              onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
               className="rounded-xl border-2 border-zinc-800 bg-zinc-900 px-4 py-3 text-white outline-none focus:border-red-600"
             />
           </div>
-          
+
           <div className="flex flex-col gap-2">
             <label className="text-sm font-medium text-zinc-400">
               Zip Code
@@ -158,7 +166,7 @@ export default function SignUpPage() {
             <input
               placeholder="Zip Code"
               value={formData.zipcode}
-              onChange={(e) => setFormData({...formData, zipcode: e.target.value})}
+              onChange={(e) => setFormData({ ...formData, zipcode: e.target.value })}
               className="rounded-xl border-2 border-zinc-800 bg-zinc-900 px-4 py-3 text-white outline-none focus:border-red-600"
             />
           </div>
@@ -171,7 +179,7 @@ export default function SignUpPage() {
               type="email"
               placeholder="your@email.com"
               value={formData.email}
-              onChange={(e) => setFormData({...formData, email: e.target.value})}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               className="rounded-xl border-2 border-zinc-800 bg-zinc-900 px-4 py-3 text-white outline-none focus:border-red-600"
             />
           </div>
@@ -184,7 +192,7 @@ export default function SignUpPage() {
               type="password"
               placeholder="••••••••"
               value={formData.password}
-              onChange={(e) => setFormData({...formData, password: e.target.value})}
+              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
               className="rounded-xl border-2 border-zinc-800 bg-zinc-900 px-4 py-3 text-white outline-none focus:border-red-600"
             />
           </div>
