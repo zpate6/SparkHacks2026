@@ -10,4 +10,8 @@ import java.util.List;
 public interface MessageRepository extends MongoRepository<Message, String> {
     // Find messages between two users
     List<Message> findByParticipantsContaining(String userId);
+
+    // Find conversation between two specific users
+    @org.springframework.data.mongodb.repository.Query("{ 'participants': { $all: [?0, ?1] } }")
+    Message findConversation(String user1, String user2);
 }

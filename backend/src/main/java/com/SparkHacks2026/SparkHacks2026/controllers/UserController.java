@@ -16,10 +16,14 @@ import java.util.List;
 @CrossOrigin(origins = "*") // Allows your frontend to connect
 public class UserController {
 
-    @Autowired private UserRepository userRepository;
-    @Autowired private AuthRepository authRepository;
-    @Autowired private ProfileRepository profileRepository;
-    @Autowired private PortfolioRepository portfolioRepository;
+    @Autowired
+    private UserRepository userRepository;
+    @Autowired
+    private AuthRepository authRepository;
+    @Autowired
+    private ProfileRepository profileRepository;
+    @Autowired
+    private PortfolioRepository portfolioRepository;
 
     // GET all users
     @GetMapping
@@ -53,10 +57,8 @@ public class UserController {
         User user = new User();
         user.setAuthId(auth.getId());
         user.setProfileId(profile.getId());
-        user.setProfileId(portfolio.getId());
+        user.setPortfolioId(portfolio.getId());
         user.setStatus("ACTIVE");
-
-
 
         return userRepository.save(user);
     }

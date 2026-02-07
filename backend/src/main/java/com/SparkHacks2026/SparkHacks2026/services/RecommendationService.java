@@ -11,8 +11,10 @@ import java.util.stream.Collectors;
 
 @Service
 public class RecommendationService {
-    @Autowired private ProfileRepository profileRepository;
-    @Autowired private ConnectionRepository connectionRepository;
+    @Autowired
+    private ProfileRepository profileRepository;
+    @Autowired
+    private ConnectionRepository connectionRepository;
 
     public List<Profile> getRecommendedProfiles(String profileId, String zipcode) {
         // 1. Get IDs of people this user has already swiped on or matched with
