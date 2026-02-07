@@ -31,7 +31,7 @@ export default function SignUpPage() {
     })));
   }, []);
 
-  const handleSignUp = () => {
+  const handleSignUp = async () => {
     if (!name || !email || !password || !confirm) {
       alert("Please fill out all fields");
       return;
@@ -42,17 +42,26 @@ export default function SignUpPage() {
       return;
     }
 
-    localStorage.setItem(
-      "user",
-      JSON.stringify({
-        name,
-        email,
-        type: "signup",
-        userType,
-      })
-    );
+    try {
+      const response = await fetch("http://localhost:8080/api/users/signup", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ name, email, password }),
+      });
 
-    router.push("/homePage");
+      if (response.ok) {
+        // Optionally store user data or just redirect
+        router.push("/"); // Redirect to login page
+      } else {
+        const errorData = await response.json();
+        alert(errorData.message || "Signup failed");
+      }
+    } catch (error) {
+      console.error("Signup error:", error);
+      alert("An error occurred during signup");
+    }
   };
 
   return (

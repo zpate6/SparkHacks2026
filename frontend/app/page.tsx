@@ -19,21 +19,38 @@ export default function LoginPage() {
     })));
   }, []);
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     if (!email || !password) {
       alert("Please enter email and password");
       return;
     }
 
-    localStorage.setItem(
-      "user",
-      JSON.stringify({
-        email,
-        type: "login",
-      })
-    );
+    try {
+      const response = await fetch("http://localhost:8080/api/users/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+      });
 
-    router.push("/homePage");
+      if (response.ok) {
+        const data = await response.json();
+        localStorage.setItem(
+          "user",
+          JSON.stringify({
+            ...data.user,
+            type: "login",
+          })
+        );
+        router.push("/homePage");
+      } else {
+        alert("Invalid email or password");
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+      alert("An error occurred during login");
+    }
   };
 
   return (
