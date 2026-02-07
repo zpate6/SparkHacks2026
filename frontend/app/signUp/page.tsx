@@ -9,8 +9,18 @@ export default function SignUpPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
+  const [userType, setUserType] = useState("Studios");
   const [floatingItems, setFloatingItems] = useState<Array<{ left: string, delay: string, duration: string }>>([]);
   const router = useRouter();
+
+  const USER_TYPES = [
+    "Studios",
+    "Producer",
+    "Directors",
+    "Scriptwriter",
+    "Actors",
+    "Musicians"
+  ];
 
   useEffect(() => {
     // eslint-disable-next-line
@@ -38,6 +48,7 @@ export default function SignUpPage() {
         name,
         email,
         type: "signup",
+        userType,
       })
     );
 
@@ -64,7 +75,7 @@ export default function SignUpPage() {
       </div>
 
       {/* Phone frame */}
-      <div className="relative h-[700px] w-[520px] overflow-hidden rounded-[28px] bg-zinc-900 shadow-[0_10px_50px_rgba(220,38,38,0.35)]">
+      <div className="relative h-[780px] w-[520px] overflow-hidden rounded-[28px] bg-zinc-900 shadow-[0_10px_50px_rgba(220,38,38,0.35)]">
         {/* Header */}
         <div className="bg-gradient-to-br from-red-600 to-red-900 px-6 pt-10 pb-5 text-white">
           <div className="mb-4 text-center text-4xl">🎬</div>
@@ -75,7 +86,31 @@ export default function SignUpPage() {
         </div>
 
         {/* Scrollable Content */}
-        <div className="flex flex-col gap-4 px-6 py-5 overflow-y-auto max-h-[430px]">
+        <div className="flex flex-col gap-4 px-6 py-5 overflow-y-auto max-h-[510px]">
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-medium text-zinc-400">
+              User Type
+            </label>
+            <div className="relative">
+              <select
+                value={userType}
+                onChange={(e) => setUserType(e.target.value)}
+                className="w-full appearance-none rounded-xl border-2 border-zinc-800 bg-zinc-900 px-4 py-3 text-white outline-none focus:border-red-600"
+              >
+                {USER_TYPES.map((type) => (
+                  <option key={type} value={type}>
+                    {type}
+                  </option>
+                ))}
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-zinc-400">
+                <svg className="h-4 w-4 fill-current" viewBox="0 0 20 20">
+                  <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
+                </svg>
+              </div>
+            </div>
+          </div>
+
           <div className="flex flex-col gap-2">
             <label className="text-sm font-medium text-zinc-400">
               First & Last Name
