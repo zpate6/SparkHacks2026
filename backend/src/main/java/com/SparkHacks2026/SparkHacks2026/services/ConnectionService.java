@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 public class ConnectionService {
     @Autowired private ConnectionRepository connectionRepository;
     @Autowired private ProfileRepository profileRepository;
+    @Autowired private UserRepository userRepository;
     @Autowired private QueueRepository queueRepository;
     @Autowired private AnalyticsRepository analyticsRepository;
 
@@ -68,7 +69,7 @@ public class ConnectionService {
         visited.add(startUserId);
 
         int depth = 0;
-        while (!queue.isEmpty() && depth < 7) {
+        while (!queue.isEmpty() && depth < 10) {
             int levelSize = queue.size();
             for (int i = 0; i < levelSize; i++) {
                 String current = queue.poll();
@@ -112,23 +113,43 @@ public class ConnectionService {
         // 1. Get all accepted professional connections
         List<Connection> connections = connectionRepository.findAll().stream()
                 .filter(c -> "ACCEPTED".equals(c.getStatus()))
-                .collect(Collectors.toList());
+                .toList();
 
         // 2. Extract unique user IDs involved in these connections
         Set<String> userIds = new HashSet<>();
         connections.forEach(c -> userIds.addAll(c.getUsers()));
 
-        // 3. Fetch profiles to create labeled nodes
-        List<Profile> profiles = profileRepository.findAllById(userIds);
-        List<GraphDataResponse.Node> nodes = profiles.stream()
-                .map(p -> new GraphDataResponse.Node(
-                        p.getId(),
-                        p.getFirstName() + " " + p.getLastName(),
-                        p.getProfession()))
-                .collect(Collectors.toList());
+        // 3. Fetch User objects to get their linked Profile IDs
+        List<User> users = userRepository.findAllById(userIds);
 
-        // 4. Create links based on the connection records
+        // Create a map of User ID -> Profile ID for easy lookup
+        Map<String, String> userToProfileMap = users.stream()
+                .collect(Collectors.toMap(User::getId, User::getProfileId));
+
+        // 4. Fetch the Profiles using the mapped IDs
+        List<Profile> profiles = profileRepository.findAllById(userToProfileMap.values());
+        Map<String, Profile> profileMap = profiles.stream()
+                .collect(Collectors.toMap(Profile::getId, p -> p));
+
+        // 5. Build the Nodes using User IDs (to match link references)
+        List<GraphDataResponse.Node> nodes = new ArrayList<>();
+        for (User user : users) {
+            Profile profile = profileMap.get(user.getProfileId());
+            if (profile != null) {
+                nodes.add(new GraphDataResponse.Node(
+                        user.getId(),
+                        profile.getFirstName() + " " + profile.getLastName(),
+                        profile.getProfession()));
+            }
+        }
+
+        // 6. Build and FILTER Links
+        // Only include links where BOTH nodes exist in our final nodes list
+        Set<String> validNodeIds = nodes.stream().map(n -> n.getId()).collect(Collectors.toSet());
+
         List<GraphDataResponse.Link> links = connections.stream()
+                .filter(c -> validNodeIds.contains(c.getUsers().get(0)) &&
+                             validNodeIds.contains(c.getUsers().get(1)))
                 .map(c -> new GraphDataResponse.Link(
                         c.getUsers().get(0),
                         c.getUsers().get(1),
