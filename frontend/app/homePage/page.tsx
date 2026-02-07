@@ -216,7 +216,7 @@ export default function HomePage() {
             </Link>
           </li>
           <li>
-            <Link href="/portfolioPage" className="flex flex-col items-center gap-1 text-zinc-500 hover:text-zinc-300 transition">
+            <Link href="/viewPublishedProfilePage" className="flex flex-col items-center gap-1 text-zinc-500 hover:text-zinc-300 transition">
               <User size={24} />
             </Link>
           </li>
