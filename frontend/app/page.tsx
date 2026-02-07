@@ -100,7 +100,7 @@ export default function LoginPage() {
           </button>
 
           <Link
-            href="/signUp"
+            href="/signUpPage"
             className="mt-2 w-full rounded-full border-2 border-red-600 py-3.5 text-lg font-semibold text-red-500 text-center block hover:bg-red-600 hover:text-white transition active:scale-95"
           >
             Sign Up
