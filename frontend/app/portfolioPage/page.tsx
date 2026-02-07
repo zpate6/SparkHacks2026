@@ -93,7 +93,7 @@ export default function PortfolioPage() {
         {/* Footer */}
         <div className="absolute bottom-0 left-0 right-0 px-6 pb-4">
           <Link
-            href="/page3"
+            href="/homePage"
             className="block w-full rounded-full border-2 border-red-600 py-3 text-center font-semibold text-red-500 hover:bg-red-600 hover:text-white transition"
           >
             Back to Home
