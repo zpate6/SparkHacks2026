@@ -44,11 +44,18 @@ public class UserController {
         profile.setZipcode(request.getZipcode());
         profile = profileRepository.save(profile);
 
-        // 3. Link them to the main User document
+        // 3. Create an empty Portfolio so the ID is not null
+        Portfolio portfolio = new Portfolio();
+        portfolio = portfolioRepository.save(portfolio);
+
+        // 4. Link them to the main User document
         User user = new User();
         user.setAuthId(auth.getId());
         user.setProfileId(profile.getId());
+        user.setProfileId(portfolio.getId());
         user.setStatus("ACTIVE");
+
+
 
         return userRepository.save(user);
     }
@@ -60,6 +67,12 @@ public class UserController {
             return userRepository.findByAuthId(auth.getId());
         }
         throw new RuntimeException("Invalid credentials");
+    }
+
+    @GetMapping("/by-profile/{profileId}")
+    public User getUserByProfile(@PathVariable String profileId) {
+        return userRepository.findByProfileId(profileId)
+                .orElseThrow(() -> new RuntimeException("User not found for profile: " + profileId));
     }
 
     @GetMapping("/profile/{profileId}")

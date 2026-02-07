@@ -21,33 +21,43 @@ interface ProfileData {
 }
 
 export default function ViewPortfolioPage({ params }: Props) {
-  const { id } = use(params); // This ID is the profileId from the swiping card
+  const { id } = use(params); // The profileId from the URL
   const [portfolio, setPortfolio] = useState<PortfolioData | null>(null);
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function fetchData() {
-      try {
-        // 1. Fetch Profile to get the name/role
-        const profileRes = await fetch(`http://localhost:8080/api/users/profile/${id}`);
-        const profileJson = await profileRes.json();
-        setProfile(profileJson);
+  async function fetchData() {
+    try {
+      // 1. Fetch Profile for names/role
+      const profileRes = await fetch(`http://localhost:8080/api/users/profile/${id}`);
+      const profileData = await profileRes.json();
+      setProfile(profileData);
 
-        // 2. Fetch User to get the portfolioId
-        // Note: In your current card mapping, you might already have portfolioId.
-        // If not, fetch user by profileId first.
-        const portfolioRes = await fetch(`http://localhost:8080/api/users/portfolio/${profileJson.portfolioId}`);
-        const portfolioJson = await portfolioRes.json();
-        setPortfolio(portfolioJson);
-      } catch (err) {
-        console.error("Failed to load portfolio:", err);
-      } finally {
+      // 2. Fetch User by profileId to get the portfolioId
+      const userRes = await fetch(`http://localhost:8080/api/users/by-profile/${id}`);
+      const userData = await userRes.json();
+
+      // 3. Safety Check: If portfolioId is null, don't fetch and show a default state
+      if (!userData.portfolioId) {
+        console.warn("User has no portfolioId assigned.");
         setLoading(false);
+        return;
       }
+
+      // 4. Fetch actual Portfolio using the ID from User
+      const portfolioRes = await fetch(`http://localhost:8080/api/portfolios/${userData.portfolioId}`);
+      const portfolioData = await portfolioRes.json();
+      setPortfolio(portfolioData);
+      
+    } catch (err) {
+      console.error("Failed to load portfolio data:", err);
+    } finally {
+      setLoading(false);
     }
-    fetchData();
-  }, [id]);
+  }
+  fetchData();
+}, [id]);
 
   if (loading) return <div className="min-h-screen bg-black text-white flex items-center justify-center">Loading Portfolio...</div>;
 
@@ -110,10 +120,6 @@ export default function ViewPortfolioPage({ params }: Props) {
                 )) || <p className="text-zinc-500 text-xs">No external links available.</p>}
               </ul>
             </div>
-            
-            <button className="w-full py-4 bg-red-600 text-white rounded-2xl font-bold shadow-lg shadow-red-900/20 hover:bg-red-500 transition">
-              Send Connection Request
-            </button>
           </div>
         </div>
       </div>
