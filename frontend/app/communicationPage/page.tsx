@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { BottomNav } from "@/components/BottomNav";
 
 type ChatMessage = {
   senderId: string;
