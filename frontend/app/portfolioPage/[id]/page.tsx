@@ -1,7 +1,5 @@
 "use client";
 
-// app/users/page.tsx (or pages/users.tsx)
-
 import { useEffect, useState } from 'react';
 import { User } from '@/types';
 import { getAllUsers } from '@/lib/api';
@@ -10,6 +8,9 @@ export default function UsersPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // Replace with a real user ID from your session later
+  const currentTestUserId = "698763b17cabdcf990b901e4"; 
 
   useEffect(() => {
     getAllUsers()
@@ -23,19 +24,44 @@ export default function UsersPage() {
       });
   }, []);
 
+  const handleManualConnect = async (targetUserId: string) => {
+    try {
+      const response = await fetch(
+        `http://localhost:8080/api/connections/test/manual?user1=${currentTestUserId}&user2=${targetUserId}&status=ACCEPTED`, 
+        { method: 'POST' }
+      );
+      if (response.ok) {
+        alert(`Successfully created connection with ${targetUserId}`);
+      }
+    } catch (err) {
+      alert("Failed to create test connection");
+    }
+  };
+
   if (loading) return <p>Loading SparkHacks Users...</p>;
   if (error) return <p className="text-red-500">Error: {error}</p>;
 
   return (
     <div className="p-8">
-      <h1 className="text-2xl font-bold mb-4">Network Users</h1>
-      <ul className="space-y-2">
+      <h1 className="text-2xl font-bold mb-4">Network Users (Test Panel)</h1>
+      <ul className="space-y-4">
         {users.map((user) => (
-          <li key={user.id} className="p-4 border rounded shadow-sm">
-            <p>ID: {user.id}</p>
-            <p>Status: <span className={user.status === 'ACTIVE' ? 'text-green-600' : 'text-gray-500'}>
-              {user.status}
-            </span></p>
+          <li key={user.id} className="p-4 border rounded shadow-sm flex justify-between items-center">
+            <div>
+              <p className="font-mono text-sm">ID: {user.id}</p>
+              <p className="font-mono text-sm">name: {user.id}</p>
+              <p>Status: <span className={user.status === 'ACTIVE' ? 'text-green-600' : 'text-gray-500'}>
+                {user.status}
+              </span></p>
+            </div>
+            {user.id !== currentTestUserId && (
+              <button 
+                onClick={() => handleManualConnect(user.id)}
+                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
+              >
+                Create Test Connection
+              </button>
+            )}
           </li>
         ))}
       </ul>

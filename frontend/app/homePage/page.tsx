@@ -3,11 +3,12 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { Heart, X, MessageCircle, User, Star, MapPin, Briefcase, Film } from "lucide-react";
+import { Heart, X, MessageCircle, User, Star, MapPin, Briefcase, Film, Award, Layers, BookOpen, Share2 } from "lucide-react";
 import Link from "next/link";
+import MiniNetwork from "@/components/MiniNetwork";
 
 interface Profile {
-  id: number;
+  id: string;
   name: string;
   role: string;
   distance: string;
@@ -16,44 +17,17 @@ interface Profile {
   tags: string[];
 }
 
-const MOCK_PROFILES: Profile[] = [
-  {
-    id: 1,
-    name: "Alex Chen",
-    role: "Director",
-    distance: "2 miles away",
-    image: "/profiles/director.png",
-    bio: "Visionary director seeking passionate actors for an upcoming indie sci-fi thriller. Let's create magic together. 🎬✨",
-    tags: ["Feature Film", "Sci-Fi", "Indie"],
-  },
-  {
-    id: 2,
-    name: "Sarah Miller",
-    role: "Actress",
-    distance: "5 miles away",
-    image: "/profiles/actress.png",
-    bio: "Classically trained actress with 5 years of theater experience. Looking for challenging roles in drama and historical pieces.",
-    tags: ["Drama", "Theater", "Lead"],
-  },
-  {
-    id: 3,
-    name: "Marcus Thorne",
-    role: "Cinematographer",
-    distance: "1 mile away",
-    image: "/profiles/filmmaker.png",
-    bio: "Capturing the gritty reality of urban life. Specializing in low-light and handheld camera work.",
-    tags: ["Documentary", "Urban", "Raw"],
-  },
-];
-
 interface User {
+  id: string;
   name?: string;
   email: string;
   type: string;
+  profileId: string;
 }
 
 export default function HomePage() {
   const [user, setUser] = useState<User | null>(null);
+  const [profiles, setProfiles] = useState<Profile[]>([]);
   const router = useRouter();
   const [currentProfileIndex, setCurrentProfileIndex] = useState(0);
   const [direction, setDirection] = useState<"left" | "right" | null>(null);
@@ -64,20 +38,169 @@ export default function HomePage() {
       router.push("/");
       return;
     }
-    setUser(JSON.parse(storedUser));
+    const parsedUser = JSON.parse(storedUser);
+    setUser(parsedUser);
+
+    const fetchProfiles = async () => {
+      try {
+        // 1. Get user's profile to get zipcode
+        const profileRes = await fetch(`http://localhost:8080/api/users/profile/${parsedUser.profileId}`);
+        if (!profileRes.ok) throw new Error("Failed to fetch profile");
+        const profileData = await profileRes.json();
+
+        // 2. Get recommendations
+        // Use profileId so backend can correctly filter out the current user
+        const res = await fetch(`http://localhost:8080/api/connections/cards/${parsedUser.profileId}?zipcode=${profileData.zipcode}`);
+        if (res.ok) {
+          const data = await res.json();
+          // Transform backend data to match frontend expectations if needed
+          // Assuming backend returns list of Profile objects matching the interface largely
+          // but we might need to map 'profession' to 'role' or similar if they differ.
+          // Let's check the backend model: Profile has firstName, lastName, profession, zipcode, skills, genres, preferredPay.
+          // Frontend Profile interface needs: id, name, role, distance, image, bio, tags.
+
+          const mappedProfiles = data.map((p: any) => ({
+            id: p.id,
+            name: `${p.firstName} ${p.lastName}`,
+            role: p.profession,
+            distance: "10 miles away", // Mock distance for now as backend doesn't calculate it yet
+            image: "/profiles/director.png", // Mock image for now
+            bio: p.bio || "No bio available", // Add bio to backend model if missing, or use default
+            tags: p.skills || [],
+          }));
+          setProfiles(mappedProfiles);
+        }
+      } catch (error) {
+        console.error("Error fetching profiles:", error);
+      }
+    };
+
+    fetchProfiles();
   }, [router]);
 
-  const handleSwipe = (dir: "left" | "right") => {
+  const handleSwipe = async (dir: "left" | "right") => {
+    if (!user || profiles.length === 0) return;
+
+    const targetProfile = profiles[currentProfileIndex];
     setDirection(dir);
+
+    // Send swipe to backend
+    // Use profileId for both requester and target to maintain consistency in the graph
+    try {
+      await fetch(`http://localhost:8080/api/connections/swipe?requesterId=${user.profileId}&targetId=${targetProfile.id}&rightSwipe=${dir === 'right'}`, {
+        method: 'POST'
+      });
+    } catch (err) {
+      console.error("Error sending swipe:", err);
+    }
+
     setTimeout(() => {
-      setCurrentProfileIndex((prev) => (prev + 1) % MOCK_PROFILES.length);
+      setCurrentProfileIndex((prev) => (prev + 1) % profiles.length);
       setDirection(null);
     }, 300);
   };
 
   if (!user) return null;
 
-  const currentProfile = MOCK_PROFILES[currentProfileIndex];
+  // Show loading or empty state if no profiles
+  if (profiles.length === 0) {
+    return (
+      <div className="flex h-screen w-full flex-col bg-black text-white items-center justify-center">
+        <div className="text-xl">Finding matching profiles...</div>
+      </div>
+    );
+  }
+
+  const currentProfile = profiles[currentProfileIndex];
+
+  return (
+    <div className="flex h-screen w-full flex-col bg-black text-white overflow-hidden font-sans">
+      <header className="flex items-center justify-between px-8 py-4 border-b border-zinc-800">
+        <div className="flex items-center gap-2">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-600 shadow-lg shadow-red-900/40">
+            <span className="text-xl">🎬</span>
+          </div>
+          <h1 className="text-xl font-bold">Entertainment <span className="text-red-600">Tinder</span></h1>
+        </div>
+        {/* Navigation / Logout */}
+      </header>
+
+      <div className="flex flex-1 overflow-hidden">
+        {/* LEFT SIDE: Swiping Area */}
+        <main className="flex-[0.6] flex flex-col items-center justify-center relative border-r border-zinc-800 bg-zinc-950/50">
+          <div className="relative w-full max-w-sm h-[600px]">
+            <div className={`absolute w-full h-full rounded-[32px] bg-zinc-900 overflow-hidden shadow-2xl border border-zinc-800 transition-transform duration-300 ${direction === "left" ? "-translate-x-[150%] rotate-[-20deg]" : direction === "right" ? "translate-x-[150%] rotate-[20deg]" : ""}`}>
+              <div className="relative h-full w-full">
+                <Image src={currentProfile.image} alt={currentProfile.name} fill className="object-cover" priority />
+                <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent" />
+                <div className="absolute bottom-8 left-8">
+                   <h2 className="text-4xl font-bold">{currentProfile.name}</h2>
+                   <p className="text-red-500 font-semibold">{currentProfile.role}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-8 flex items-center gap-6 z-10">
+            <button onClick={() => handleSwipe("left")} className="h-16 w-16 rounded-full bg-zinc-800 text-red-500 flex items-center justify-center hover:bg-zinc-700 transition"><X size={32}/></button>
+            <button onClick={() => handleSwipe("right")} className="h-16 w-16 rounded-full bg-red-600 text-white flex items-center justify-center hover:bg-red-500 transition shadow-lg shadow-red-900/50"><Heart size={32} fill="currentColor"/></button>
+          </div>
+        </main>
+
+        {/* RIGHT SIDE: Detailed Profile View */}
+        <aside className="flex-[0.4] bg-zinc-900 overflow-y-auto p-8 custom-scrollbar">
+          <div className="space-y-8">
+            <section>
+              <h3 className="flex items-center gap-2 text-zinc-400 text-sm font-bold uppercase tracking-widest mb-4"><BookOpen size={16}/> Biography</h3>
+              <p className="text-zinc-300 leading-relaxed text-lg">{currentProfile.bio}</p>
+            </section>
+
+            <section>
+              <h3 className="flex items-center gap-2 text-zinc-400 text-sm font-bold uppercase tracking-widest mb-4"><Layers size={16}/> Skills & Tags</h3>
+              <div className="flex flex-wrap gap-2">
+                {currentProfile.tags.map(tag => (
+                  <span key={tag} className="px-4 py-1.5 bg-zinc-800 border border-zinc-700 rounded-full text-sm text-zinc-300">#{tag}</span>
+                ))}
+              </div>
+            </section>
+
+            <section>
+              <h3 className="flex items-center gap-2 text-zinc-400 text-sm font-bold uppercase tracking-widest mb-4"><Award size={16}/> Industry Details</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-4 bg-zinc-950 rounded-2xl border border-zinc-800">
+                  <p className="text-xs text-zinc-500 mb-1">Location</p>
+                  <p className="font-medium">{currentProfile.distance}</p>
+                </div>
+                <div className="p-4 bg-zinc-950 rounded-2xl border border-zinc-800">
+                  <p className="text-xs text-zinc-500 mb-1">Current Role</p>
+                  <p className="font-medium">{currentProfile.role}</p>
+                </div>
+              </div>
+            </section>
+
+            {/* NEW: Mini Network View */}
+            <section>
+              <h3 className="flex items-center gap-2 text-zinc-400 text-sm font-bold uppercase tracking-widest mb-4">
+                <Share2 size={16}/> How you're connected
+              </h3>
+              <MiniNetwork fromId={user.profileId} toId={currentProfile.id} />
+            </section>
+                    
+            {/* Call to action */}
+            <div className="pt-4">
+              <Link href={`/portfolioPage/${currentProfile.id}`} className="block w-full text-center py-4 bg-zinc-800 hover:bg-zinc-700 rounded-2xl border border-zinc-700 transition font-bold">
+                View Full Portfolio
+              </Link>
+            </div>
+          </div>
+        </aside>
+      </div>
+
+      <nav className="border-t border-zinc-800 bg-zinc-950 px-6 py-4">
+        {/* Navigation list remains same */}
+      </nav>
+    </div>
+  );
 
   return (
     <div className="flex h-screen w-full flex-col bg-black text-white overflow-hidden font-sans">

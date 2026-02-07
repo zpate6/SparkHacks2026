@@ -63,6 +63,14 @@ export default function SignUpPage() {
       });
 
       if (response.ok) {
+        const data = await response.json();
+        localStorage.setItem(
+          "user",
+          JSON.stringify({
+            ...data,
+            type: "login",
+          })
+        );
         alert('User created successfully!');
         router.push('/homePage'); // Redirect to swiping home page
       }
@@ -110,7 +118,7 @@ export default function SignUpPage() {
             <div className="relative">
               <select
                 value={formData["profession"]}
-                onChange={(e) => setFormData({...formData, profession: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, profession: e.target.value })}
                 className="w-full appearance-none rounded-xl border-2 border-zinc-800 bg-zinc-900 px-4 py-3 text-white outline-none focus:border-red-600"
               >
                 {USER_TYPES.map((type) => (
