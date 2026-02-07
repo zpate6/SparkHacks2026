@@ -7,7 +7,7 @@ import { Heart, X, MessageCircle, User, Star, MapPin, Briefcase, Film } from "lu
 import Link from "next/link";
 
 interface Profile {
-  id: number;
+  id: string;
   name: string;
   role: string;
   distance: string;
@@ -16,44 +16,17 @@ interface Profile {
   tags: string[];
 }
 
-const MOCK_PROFILES: Profile[] = [
-  {
-    id: 1,
-    name: "Alex Chen",
-    role: "Director",
-    distance: "2 miles away",
-    image: "/profiles/director.png",
-    bio: "Visionary director seeking passionate actors for an upcoming indie sci-fi thriller. Let's create magic together. 🎬✨",
-    tags: ["Feature Film", "Sci-Fi", "Indie"],
-  },
-  {
-    id: 2,
-    name: "Sarah Miller",
-    role: "Actress",
-    distance: "5 miles away",
-    image: "/profiles/actress.png",
-    bio: "Classically trained actress with 5 years of theater experience. Looking for challenging roles in drama and historical pieces.",
-    tags: ["Drama", "Theater", "Lead"],
-  },
-  {
-    id: 3,
-    name: "Marcus Thorne",
-    role: "Cinematographer",
-    distance: "1 mile away",
-    image: "/profiles/filmmaker.png",
-    bio: "Capturing the gritty reality of urban life. Specializing in low-light and handheld camera work.",
-    tags: ["Documentary", "Urban", "Raw"],
-  },
-];
-
 interface User {
+  id: string;
   name?: string;
   email: string;
   type: string;
+  profileId: string;
 }
 
 export default function HomePage() {
   const [user, setUser] = useState<User | null>(null);
+  const [profiles, setProfiles] = useState<Profile[]>([]);
   const router = useRouter();
   const [currentProfileIndex, setCurrentProfileIndex] = useState(0);
   const [direction, setDirection] = useState<"left" | "right" | null>(null);
@@ -64,20 +37,80 @@ export default function HomePage() {
       router.push("/");
       return;
     }
-    setUser(JSON.parse(storedUser));
+    const parsedUser = JSON.parse(storedUser);
+    setUser(parsedUser);
+
+    const fetchProfiles = async () => {
+      try {
+        // 1. Get user's profile to get zipcode
+        const profileRes = await fetch(`http://localhost:8080/api/users/profile/${parsedUser.profileId}`);
+        if (!profileRes.ok) throw new Error("Failed to fetch profile");
+        const profileData = await profileRes.json();
+
+        // 2. Get recommendations
+        // Use profileId so backend can correctly filter out the current user
+        const res = await fetch(`http://localhost:8080/api/connections/cards/${parsedUser.profileId}?zipcode=${profileData.zipcode}`);
+        if (res.ok) {
+          const data = await res.json();
+          // Transform backend data to match frontend expectations if needed
+          // Assuming backend returns list of Profile objects matching the interface largely
+          // but we might need to map 'profession' to 'role' or similar if they differ.
+          // Let's check the backend model: Profile has firstName, lastName, profession, zipcode, skills, genres, preferredPay.
+          // Frontend Profile interface needs: id, name, role, distance, image, bio, tags.
+
+          const mappedProfiles = data.map((p: any) => ({
+            id: p.id,
+            name: `${p.firstName} ${p.lastName}`,
+            role: p.profession,
+            distance: "10 miles away", // Mock distance for now as backend doesn't calculate it yet
+            image: "/profiles/director.png", // Mock image for now
+            bio: p.bio || "No bio available", // Add bio to backend model if missing, or use default
+            tags: p.skills || [],
+          }));
+          setProfiles(mappedProfiles);
+        }
+      } catch (error) {
+        console.error("Error fetching profiles:", error);
+      }
+    };
+
+    fetchProfiles();
   }, [router]);
 
-  const handleSwipe = (dir: "left" | "right") => {
+  const handleSwipe = async (dir: "left" | "right") => {
+    if (!user || profiles.length === 0) return;
+
+    const targetProfile = profiles[currentProfileIndex];
     setDirection(dir);
+
+    // Send swipe to backend
+    // Use profileId for both requester and target to maintain consistency in the graph
+    try {
+      await fetch(`http://localhost:8080/api/connections/swipe?requesterId=${user.profileId}&targetId=${targetProfile.id}&rightSwipe=${dir === 'right'}`, {
+        method: 'POST'
+      });
+    } catch (err) {
+      console.error("Error sending swipe:", err);
+    }
+
     setTimeout(() => {
-      setCurrentProfileIndex((prev) => (prev + 1) % MOCK_PROFILES.length);
+      setCurrentProfileIndex((prev) => (prev + 1) % profiles.length);
       setDirection(null);
     }, 300);
   };
 
   if (!user) return null;
 
-  const currentProfile = MOCK_PROFILES[currentProfileIndex];
+  // Show loading or empty state if no profiles
+  if (profiles.length === 0) {
+    return (
+      <div className="flex h-screen w-full flex-col bg-black text-white items-center justify-center">
+        <div className="text-xl">Finding matching profiles...</div>
+      </div>
+    );
+  }
+
+  const currentProfile = profiles[currentProfileIndex];
 
   return (
     <div className="flex h-screen w-full flex-col bg-black text-white overflow-hidden font-sans">
