@@ -21,10 +21,14 @@ import java.util.List;
 @CrossOrigin(origins = "*") // Allows your frontend to connect
 public class UserController {
 
-    @Autowired private UserRepository userRepository;
-    @Autowired private AuthRepository authRepository;
-    @Autowired private ProfileRepository profileRepository;
-    @Autowired private PortfolioRepository portfolioRepository;
+    @Autowired
+    private UserRepository userRepository;
+    @Autowired
+    private AuthRepository authRepository;
+    @Autowired
+    private ProfileRepository profileRepository;
+    @Autowired
+    private PortfolioRepository portfolioRepository;
 
     // GET all users
     @GetMapping

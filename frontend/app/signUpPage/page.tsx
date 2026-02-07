@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createNewUser } from "@/lib/api";
 import { User } from "@/types";
+import Image from "next/image";
+import llogo from "../photos/curtaincalllogo.png";
 
 export default function SignUpPage() {
   const [name, setName] = useState("");
@@ -20,17 +22,17 @@ export default function SignUpPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
-  const [userType, setUserType] = useState("Studios");
+  const [userType, setUserType] = useState("STUDIO");
   const [floatingItems, setFloatingItems] = useState<Array<{ left: string, delay: string, duration: string }>>([]);
   const router = useRouter();
 
   const USER_TYPES = [
-    "Studios",
-    "Producer",
-    "Directors",
-    "Scriptwriter",
-    "Actors",
-    "Musicians"
+    "STUDIO",
+    "PRODUCER",
+    "DIRECTOR",
+    "SCRIPTWRITER",
+    "ACTOR",
+    "MUSICIAN"
   ];
 
   useEffect(() => {
@@ -102,13 +104,26 @@ export default function SignUpPage() {
       {/* Phone frame */}
       <div className="relative h-[780px] w-[520px] overflow-hidden rounded-[28px] bg-zinc-900 shadow-[0_10px_50px_rgba(220,38,38,0.35)]">
         {/* Header */}
-        <div className="bg-gradient-to-br from-red-600 to-red-900 px-6 pt-10 pb-5 text-white">
-          <div className="mb-4 text-center text-4xl">🎬</div>
-          <h1 className="text-2xl font-semibold">Create Account</h1>
+        <div className="bg-gradient-to-br from-red-600 to-red-900 px-6 py-6 text-white flex items-center justify-between">
+        {/* Text Section */}
+        <div>
+          <h1 className="text-3xl font-bold">CurtainCall</h1>
           <p className="mt-1 text-sm text-white/90">
-            Join Entertainment Tinder now
+            Connect with industry professionals
           </p>
         </div>
+
+        {/* Logo Section */}
+        <div className="flex-shrink-0">
+          <Image
+            src={llogo}
+            alt="Curtain Call logo"
+            width={104}
+            height={104}
+            className="rounded-full"
+          />
+        </div>
+      </div>
 
         {/* Scrollable Content */}
         <div className="flex flex-col gap-4 px-6 py-5 overflow-y-auto max-h-[510px]">

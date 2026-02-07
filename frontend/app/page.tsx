@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
+import llogo from "./photos/curtaincalllogo.png";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -74,14 +76,28 @@ export default function LoginPage() {
 
       {/* Phone frame */}
       <div className="relative h-[600px] w-[520px] overflow-hidden rounded-[28px] bg-zinc-900 shadow-[0_10px_50px_rgba(220,38,38,0.35)]">
-        {/* Header */}
-        <div className="bg-gradient-to-br from-red-600 to-red-900 px-6 pt-10 pb-5 text-white">
-          <div className="mb-4 text-center text-4xl">🎬</div>
-          <h1 className="text-2xl font-semibold">Entertainment Tinder</h1>
+       {/* Header */}
+      <div className="bg-gradient-to-br from-red-600 to-red-900 px-6 py-6 text-white flex items-center justify-between">
+        {/* Text Section */}
+        <div>
+          <h1 className="text-3xl font-bold">CurtainCall</h1>
           <p className="mt-1 text-sm text-white/90">
             Connect with industry professionals
           </p>
         </div>
+
+        {/* Logo Section */}
+        <div className="flex-shrink-0">
+          <Image
+            src={llogo}
+            alt="Curtain Call logo"
+            width={104}
+            height={104}
+            className="rounded-full"
+          />
+        </div>
+      </div>
+        
 
         {/* Content */}
         <div className="flex flex-col gap-4 px-6 py-5">
