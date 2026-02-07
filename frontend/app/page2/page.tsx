@@ -1,16 +1,42 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
-//hrllo
+
 export default function SignUpPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
+  const router = useRouter();
+
+  const handleSignUp = () => {
+    if (!name || !email || !password || !confirm) {
+      alert("Please fill out all fields");
+      return;
+    }
+
+    if (password !== confirm) {
+      alert("Passwords do not match");
+      return;
+    }
+
+    localStorage.setItem(
+      "user",
+      JSON.stringify({
+        name,
+        email,
+        type: "signup",
+      })
+    );
+
+    router.push("/page3");
+  };
 
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-black">
+      {/* Floating background */}
       <div className="pointer-events-none absolute inset-0">
         {[...Array(10)].map((_, i) => (
           <span
@@ -38,15 +64,13 @@ export default function SignUpPage() {
           </p>
         </div>
 
-        {/* Content */}
-          <div className="flex flex-col gap-4 px-6 py-5 overflow-y-auto max-h-[430px]">
-          {/* First Name */}
+        {/* Scrollable Content */}
+        <div className="flex flex-col gap-4 px-6 py-5 overflow-y-auto max-h-[430px]">
           <div className="flex flex-col gap-2">
             <label className="text-sm font-medium text-zinc-400">
               First & Last Name
             </label>
             <input
-              type="First Name"
               placeholder="First Last"
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -54,7 +78,6 @@ export default function SignUpPage() {
             />
           </div>
 
-          {/* Email */}
           <div className="flex flex-col gap-2">
             <label className="text-sm font-medium text-zinc-400">
               Email
@@ -68,7 +91,6 @@ export default function SignUpPage() {
             />
           </div>
 
-          {/* Password */}
           <div className="flex flex-col gap-2">
             <label className="text-sm font-medium text-zinc-400">
               Password
@@ -82,7 +104,6 @@ export default function SignUpPage() {
             />
           </div>
 
-          {/* Confirm password */}
           <div className="flex flex-col gap-2">
             <label className="text-sm font-medium text-zinc-400">
               Confirm Password
@@ -96,12 +117,13 @@ export default function SignUpPage() {
             />
           </div>
 
-          {/* Sign Up button */}
-          <button className="mt-3 w-full rounded-full bg-gradient-to-br from-red-600 to-red-900 py-3.5 text-lg font-semibold text-white transition active:scale-95">
+          <button
+            onClick={handleSignUp}
+            className="mt-3 w-full rounded-full bg-gradient-to-br from-red-600 to-red-900 py-3.5 text-lg font-semibold text-white transition active:scale-95"
+          >
             Sign Up
           </button>
 
-          {/* Back button */}
           <Link
             href="/"
             className="mt-2 w-full rounded-full border-2 border-red-600 py-3.5 text-lg font-semibold text-red-500 text-center block hover:bg-red-600 hover:text-white transition active:scale-95"
@@ -111,7 +133,7 @@ export default function SignUpPage() {
         </div>
       </div>
 
-      {/* Floating animation */}
+      {/* Animation */}
       <style jsx global>{`
         @keyframes float {
           0% {
@@ -122,9 +144,7 @@ export default function SignUpPage() {
           }
         }
         .animate-float {
-          animation-name: float;
-          animation-timing-function: linear;
-          animation-iteration-count: infinite;
+          animation: float linear infinite;
         }
       `}</style>
     </div>
