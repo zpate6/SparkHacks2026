@@ -233,138 +233,26 @@ export default function HomePage() {
                   </div>
                 </section>
 
-            {/* NEW: Mini Network View */}
-            <section>
-              <h3 className="flex items-center gap-2 text-zinc-400 text-sm font-bold uppercase tracking-widest mb-4">
-                <Share2 size={16}/> How you're connected
-              </h3>
-              <MiniNetwork fromId={user.profileId} toId={currentProfile.id} />
-            </section>
-                    
-            {/* Call to action */}
-            <div className="pt-4">
-              <Link href={`/portfolioPage/${currentProfile.id}`} className="block w-full text-center py-4 bg-zinc-800 hover:bg-zinc-700 rounded-2xl border border-zinc-700 transition font-bold">
-                View Full Portfolio
-              </Link>
-            </div>
-          </div>
-        </aside>
-      </div>
-
-      {/* Bottom Nav */}
-      <nav className="border-t border-zinc-800 bg-zinc-950 px-6 py-4 pb-8 md:pb-4">
-        <ul className="flex items-center justify-around">
-          <li>
-            <Link href="/homePage" className="flex flex-col items-center gap-1 text-red-600">
-              <Film size={24} strokeWidth={2.5} />
-            </Link>
-          </li>
-          {/* this is the star */}
-          {/* <li>
-            <button className="flex flex-col items-center gap-1 text-zinc-500 hover:text-zinc-300 transition">
-              <Star size={24} />
-            </button>
-          </li> */}
-          <li>
-            <Link href="/communicationPage" className="flex flex-col items-center gap-1 text-zinc-500 hover:text-zinc-300 transition">
-              <MessageCircle size={24} />
-            </Link>
-          </li>
-          <li>
-            <Link href="/viewPublishedProfilePage" className="flex flex-col items-center gap-1 text-zinc-500 hover:text-zinc-300 transition">
-              <User size={24} />
-            </Link>
-          </li>
-        </ul>
-      </nav>
-    </div>
-  );
-
-  return (
-    <div className="flex h-screen w-full flex-col bg-black text-white overflow-hidden font-sans">
-      {/* Top Bar */}
-      <header className="flex items-center justify-between px-6 py-4 pt-14 md:pt-6">
-        <div className="flex items-center gap-2">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-red-600 to-red-900 shadow-lg shadow-red-900/40">
-            <span className="text-xl">🎬</span>
-          </div>
-          <h1 className="text-xl font-bold tracking-tight">
-            Entertainment <span className="text-red-600">Tinder</span>
-          </h1>
-        </div>
-        <button
-          className="rounded-full bg-zinc-900 p-2 text-zinc-400 transition hover:bg-zinc-800 hover:text-white"
-          onClick={() => {
-            localStorage.removeItem("user");
-            router.push("/");
-          }}
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-            <polyline points="16 17 21 12 16 7" />
-            <line x1="21" y1="12" x2="9" y2="12" />
-          </svg>
-        </button>
-      </header>
-
-      {/* Main Card Area */}
-      <main className="flex-1 px-4 py-2 flex flex-col items-center justify-center relative">
-        <div className="relative w-full max-w-sm h-[65vh] md:h-[600px]">
-          {/* Background Cards (Mock Stack Effect) */}
-          <div className="absolute top-4 scale-95 opacity-50 w-full h-full rounded-[32px] bg-zinc-800 border border-zinc-700 origin-bottom transform transition-all duration-300"></div>
-          <div className="absolute top-2 scale-[0.97] opacity-70 w-full h-full rounded-[32px] bg-zinc-800 border border-zinc-700 origin-bottom transform transition-all duration-300"></div>
-
-          {/* Active Card */}
-          <div
-            className={`absolute w-full h-full rounded-[32px] bg-zinc-900 overflow-hidden shadow-2xl shadow-black border border-zinc-800 transition-transform duration-300 ease-out ${direction === "left"
-              ? "-translate-x-[150%] rotate-[-20deg]"
-              : direction === "right"
-                ? "translate-x-[150%] rotate-[20deg]"
-                : ""
-              }`}
-          >
-            {/* Image */}
-            <div className="relative h-[65%] w-full">
-              <Image
-                src={currentProfile.image}
-                alt={currentProfile.name}
-                fill
-                className="object-cover"
-                priority
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-zinc-900 via-transparent to-transparent opacity-90" />
-            </div>
-
-            {/* Content */}
-            <div className="absolute bottom-0 w-full p-6 flex flex-col gap-3 bg-gradient-to-t from-zinc-900 via-zinc-900 to-transparent pt-12">
-              <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <h2 className="text-3xl font-bold text-white leading-tight">
-                    {currentProfile.name}
-                  </h2>
-                  <span className="rounded-full bg-red-600/20 px-2.5 py-0.5 text-xs font-medium text-red-500 border border-red-600/30">
-                    {currentProfile.role}
-                  </span>
+                {/* NEW: Mini Network View */}
+                <section>
+                  <h3 className="flex items-center gap-2 text-zinc-400 text-sm font-bold uppercase tracking-widest mb-4">
+                    <Share2 size={16}/> How you're connected
+                  </h3>
+                  <MiniNetwork fromId={user.profileId} toId={currentProfile!.id} />
+                </section>
+                        
+                {/* Call to action */}
+                <div className="pt-4">
+                  <Link href={`/portfolioPage/${currentProfile!.id}`} className="block w-full text-center py-4 bg-zinc-800 hover:bg-zinc-700 rounded-2xl border border-zinc-700 transition font-bold">
+                    View Full Portfolio
+                  </Link>
                 </div>
-                <div className="flex items-center gap-4 text-sm text-zinc-400">
-                  <div className="flex items-center gap-1">
-                    <MapPin size={14} />
-                    <span>{currentProfile.distance}</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Briefcase size={14} />
-                    <span>Available</span>
-                  </div>
+              </div>
+              ) : (
+                /* EMPTY SIDEBAR STATE */
+                <div className="h-full flex flex-col items-center justify-center text-center space-y-4">
+                  <Film className="text-zinc-800" size={48} />
+                  <p className="text-zinc-600 italic">Select a profile to view details</p>
                 </div>
               )}
             </aside>
@@ -376,7 +264,7 @@ export default function HomePage() {
         <ul className="flex items-center justify-around max-w-md mx-auto">
           <li><Link href="/homePage" className="text-red-600"><Film size={28} strokeWidth={2.5} /></Link></li>
           <li><Link href="/communicationPage" className="text-zinc-500 hover:text-zinc-300 transition"><MessageCircle size={28} /></Link></li>
-          <li><Link href="/portfolioPage" className="text-zinc-500 hover:text-zinc-300 transition"><User size={28} /></Link></li>
+          <li><Link href="/viewPublishedProfilePage" className="text-zinc-500 hover:text-zinc-300 transition"><User size={28} /></Link></li>
         </ul>
       </nav>
     </div>
