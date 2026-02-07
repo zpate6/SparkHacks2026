@@ -15,6 +15,7 @@ export default function SignUpPage() {
     lastName: '',
     profession: 'ACTOR', // Default from your Enum list
     zipcode: '',
+    image: '',
   });
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -168,6 +169,27 @@ export default function SignUpPage() {
               value={formData.zipcode}
               onChange={(e) => setFormData({ ...formData, zipcode: e.target.value })}
               className="rounded-xl border-2 border-zinc-800 bg-zinc-900 px-4 py-3 text-white outline-none focus:border-red-600"
+            />
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-medium text-zinc-400">
+              Profile Picture
+            </label>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) {
+                  const reader = new FileReader();
+                  reader.onloadend = () => {
+                    setFormData({ ...formData, image: reader.result as string });
+                  };
+                  reader.readAsDataURL(file);
+                }
+              }}
+              className="rounded-xl border-2 border-zinc-800 bg-zinc-900 px-4 py-3 text-white outline-none focus:border-red-600 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-red-600 file:text-white hover:file:bg-red-700"
             />
           </div>
 

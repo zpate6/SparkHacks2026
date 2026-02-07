@@ -63,7 +63,7 @@ export default function HomePage() {
             name: `${p.firstName} ${p.lastName}`,
             role: p.profession,
             distance: "10 miles away", // Mock distance for now as backend doesn't calculate it yet
-            image: "/profiles/director.png", // Mock image for now
+            image: p.image || "/profiles/director.png", // Use uploaded image or default
             bio: p.bio || "No bio available", // Add bio to backend model if missing, or use default
             tags: p.skills || [],
           }));
@@ -246,7 +246,7 @@ export default function HomePage() {
             <Heart size={32} fill="currentColor" strokeWidth={0} />
           </button>
 
-          
+
         </div>
       </main>
 
