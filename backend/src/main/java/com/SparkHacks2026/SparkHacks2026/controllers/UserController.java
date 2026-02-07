@@ -8,7 +8,6 @@ import com.SparkHacks2026.SparkHacks2026.repositories.AuthRepository;
 import com.SparkHacks2026.SparkHacks2026.repositories.ProfileRepository;
 import com.SparkHacks2026.SparkHacks2026.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
