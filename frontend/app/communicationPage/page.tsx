@@ -27,6 +27,7 @@ export default function ConnectionsPage() {
   const [input, setInput] = useState("");
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [endorsed, setEndorsed] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // Load User
@@ -88,6 +89,25 @@ export default function ConnectionsPage() {
     return () => clearInterval(interval);
   }, [currentUser, selectedConnection]);
 
+  // Check endorsement status
+  useEffect(() => {
+    if (!currentUser || !selectedConnection) return;
+
+    const checkEndorsement = async () => {
+      try {
+        const res = await fetch(`http://localhost:8080/api/endorsements/check?endorserId=${currentUser.profileId}&endorseeId=${selectedConnection.id}`);
+        if (res.ok) {
+          const isEndorsed = await res.json();
+          setEndorsed(isEndorsed);
+        }
+      } catch (error) {
+        console.error("Failed to check endorsement status", error);
+      }
+    };
+
+    checkEndorsement();
+  }, [currentUser, selectedConnection]);
+
   // Scroll to bottom of chat
   useEffect(() => {
     if (scrollRef.current) {
@@ -118,6 +138,31 @@ export default function ConnectionsPage() {
       }
     } catch (error) {
       console.error("Failed to send message", error);
+    }
+  };
+
+  const handleEndorse = async () => {
+    if (!currentUser || !selectedConnection) return;
+
+    try {
+      const res = await fetch("http://localhost:8080/api/endorsements", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          endorserId: currentUser.profileId,
+          endorseeId: selectedConnection.id,
+        }),
+      });
+
+      if (res.ok) {
+        alert(`You endorsed ${selectedConnection.firstName}!`);
+        setEndorsed(true);
+      } else {
+        alert("Failed to endorse.");
+        setEndorsed(false);
+      }
+    } catch (error) {
+      console.error("Endorsement failed", error);
     }
   };
 
@@ -191,6 +236,13 @@ export default function ConnectionsPage() {
               <>
                 {/* Chat Header */}
                 <div className="border-b border-zinc-800 px-4 py-3 text-sm text-zinc-300 flex items-center justify-between shrink-0 bg-zinc-900 z-10">
+                  <button
+                    className={`rounded-lg px-4 py-2 text-sm font-semibold text-white transition ${endorsed ? "bg-zinc-700 cursor-not-allowed" : "bg-red-600 hover:bg-red-700"}`}
+                    disabled={endorsed}
+                    onClick={handleEndorse}
+                  >
+                    {endorsed ? "Endorsed" : "Endorse"}
+                  </button>
                   <div className="flex items-center gap-2">
                     <span className="font-semibold text-white">{selectedConnection.firstName} {selectedConnection.lastName}</span>
                     <span className="text-xs text-zinc-500 px-2 py-0.5 bg-zinc-800 rounded-full">{selectedConnection.profession}</span>
