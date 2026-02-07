@@ -3,9 +3,19 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { createNewUser } from "@/lib/api";
+import { User } from "@/types";
 
 export default function SignUpPage() {
   const [name, setName] = useState("");
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+    firstName: '',
+    lastName: '',
+    profession: 'ACTOR', // Default from your Enum list
+    zipcode: '',
+  });
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -32,35 +42,32 @@ export default function SignUpPage() {
   }, []);
 
   const handleSignUp = async () => {
-    if (!name || !email || !password || !confirm) {
+
+    if (!formData.firstName || !formData.lastName || !formData.email || !formData.password || !formData.profession || !formData.zipcode || !confirm) {
       alert("Please fill out all fields");
       return;
     }
 
-    if (password !== confirm) {
+    if (formData["password"] !== confirm) {
       alert("Passwords do not match");
       return;
     }
 
+
     try {
-      const response = await fetch("http://localhost:8080/api/users/signup", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ name, email, password }),
+      // 1. Send data to your Spring Boot backend
+      const response = await fetch('http://localhost:8080/api/users/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
       });
 
       if (response.ok) {
-        // Optionally store user data or just redirect
-        router.push("/"); // Redirect to login page
-      } else {
-        const errorData = await response.json();
-        alert(errorData.message || "Signup failed");
+        alert('User created successfully!');
+        router.push('/homePage'); // Redirect to swiping home page
       }
     } catch (error) {
-      console.error("Signup error:", error);
-      alert("An error occurred during signup");
+      console.error('Registration failed:', error);
     }
   };
 
@@ -102,8 +109,8 @@ export default function SignUpPage() {
             </label>
             <div className="relative">
               <select
-                value={userType}
-                onChange={(e) => setUserType(e.target.value)}
+                value={formData["profession"]}
+                onChange={(e) => setFormData({...formData, profession: e.target.value})}
                 className="w-full appearance-none rounded-xl border-2 border-zinc-800 bg-zinc-900 px-4 py-3 text-white outline-none focus:border-red-600"
               >
                 {USER_TYPES.map((type) => (
@@ -122,12 +129,36 @@ export default function SignUpPage() {
 
           <div className="flex flex-col gap-2">
             <label className="text-sm font-medium text-zinc-400">
-              First & Last Name
+              First Name
             </label>
             <input
-              placeholder="First Last"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
+              placeholder="First Name"
+              value={formData.firstName}
+              onChange={(e) => setFormData({...formData, firstName: e.target.value})}
+              className="rounded-xl border-2 border-zinc-800 bg-zinc-900 px-4 py-3 text-white outline-none focus:border-red-600"
+            />
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-medium text-zinc-400">
+              Last Name
+            </label>
+            <input
+              placeholder="Last Name"
+              value={formData.lastName}
+              onChange={(e) => setFormData({...formData, lastName: e.target.value})}
+              className="rounded-xl border-2 border-zinc-800 bg-zinc-900 px-4 py-3 text-white outline-none focus:border-red-600"
+            />
+          </div>
+          
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-medium text-zinc-400">
+              Zip Code
+            </label>
+            <input
+              placeholder="Zip Code"
+              value={formData.zipcode}
+              onChange={(e) => setFormData({...formData, zipcode: e.target.value})}
               className="rounded-xl border-2 border-zinc-800 bg-zinc-900 px-4 py-3 text-white outline-none focus:border-red-600"
             />
           </div>
@@ -139,8 +170,8 @@ export default function SignUpPage() {
             <input
               type="email"
               placeholder="your@email.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              value={formData.email}
+              onChange={(e) => setFormData({...formData, email: e.target.value})}
               className="rounded-xl border-2 border-zinc-800 bg-zinc-900 px-4 py-3 text-white outline-none focus:border-red-600"
             />
           </div>
@@ -152,8 +183,8 @@ export default function SignUpPage() {
             <input
               type="password"
               placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              value={formData.password}
+              onChange={(e) => setFormData({...formData, password: e.target.value})}
               className="rounded-xl border-2 border-zinc-800 bg-zinc-900 px-4 py-3 text-white outline-none focus:border-red-600"
             />
           </div>
