@@ -13,6 +13,7 @@ import studio from "../photos/studio.png";
 import { Heart, X, MessageCircle, User, Star, MapPin, Briefcase, Film, Award, Layers, BookOpen, Share2, Clapperboard, LogOut } from "lucide-react";
 import MiniNetwork from "@/components/MiniNetwork";
 import { randomBeta } from "d3";
+import { BottomNav } from "@/components/BottomNav";
 
 interface Profile {
   id: string;
@@ -260,13 +261,7 @@ export default function HomePage() {
         )}
       </div>
 
-      <nav className="border-t border-zinc-800 bg-zinc-950 px-6 py-4 pb-10 shrink-0">
-        <ul className="flex items-center justify-around max-w-md mx-auto">
-          <li><Link href="/homePage" className="text-red-600"><Film size={28} strokeWidth={2.5} /></Link></li>
-          <li><Link href="/communicationPage" className="text-zinc-500 hover:text-zinc-300 transition"><MessageCircle size={28} /></Link></li>
-          <li><Link href="/viewPublishedProfilePage" className="text-zinc-500 hover:text-zinc-300 transition"><User size={28} /></Link></li>
-        </ul>
-      </nav>
+      <BottomNav></BottomNav>
     </div>
   );
 }
