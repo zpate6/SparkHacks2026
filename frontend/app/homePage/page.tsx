@@ -121,6 +121,7 @@ export default function HomePage() {
     }
 
     setTimeout(() => {
+      setProfiles((prev) => prev.filter((p) => p.id !== targetProfile.id));
       setCurrentProfileIndex((prev) => (prev + 1) % profiles.length);
       setDirection(null);
     }, 300);

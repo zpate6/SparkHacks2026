@@ -33,11 +33,13 @@ public class GraphDataResponse {
         private String source;
         private String target;
         private String type;
+        private String status;
 
-        public Link(String source, String target, String type) {
+        public Link(String source, String target, String type, String status) {
             this.source = source;
             this.target = target;
             this.type = type;
+            this.status = status;
         }
         // Getters and Setters
     }

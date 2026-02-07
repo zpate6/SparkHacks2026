@@ -13,10 +13,10 @@ interface GraphNode extends d3.SimulationNodeDatum {
 }
 
 interface GraphLink extends d3.SimulationLinkDatum<GraphNode> {
-  status: string;
   source: string | GraphNode;
   target: string | GraphNode;
   type: string;
+  status: string;
 }
 
 export default function D3NetworkGraph() {
@@ -90,7 +90,6 @@ export default function D3NetworkGraph() {
       .attr("stroke-opacity", 0.6)
       // VARYING THICKNESS LOGIC
       .attr("stroke-width", d => {
-        if (d.type === 'WORKED_WITH') return 6; // Endorsed/Worked With
         if (d.status === 'ACCEPTED') return 3;  // Connected
         return 1.5;                             // Awaiting/Pending
       })

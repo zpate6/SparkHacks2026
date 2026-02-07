@@ -138,50 +138,43 @@ public class ConnectionService {
     }
 
     public GraphDataResponse getNetworkGraph() {
-        // 1. Get all accepted professional connections
-        List<Connection> connections = connectionRepository.findAll().stream()
-                .filter(c -> "ACCEPTED".equals(c.getStatus()))
-                .toList();
+        // 1. Fetch all connections (including PENDING)
+        List<Connection> connections = connectionRepository.findAll();
 
-        // 2. Extract unique user IDs involved in these connections
-        Set<String> userIds = new HashSet<>();
-        connections.forEach(c -> userIds.addAll(c.getUsers()));
+        // 2. Extract unique Profile IDs directly from the connections
+        Set<String> profileIds = new HashSet<>();
+        for (Connection c : connections) {
+            profileIds.addAll(c.getUsers()); // These are profileIds
+        }
 
-        // 3. Fetch User objects to get their linked Profile IDs
-        List<User> users = userRepository.findAllById(userIds);
-
-        // Create a map of User ID -> Profile ID for easy lookup
-        Map<String, String> userToProfileMap = users.stream()
-                .collect(Collectors.toMap(User::getId, User::getProfileId));
-
-        // 4. Fetch the Profiles using the mapped IDs
-        List<Profile> profiles = profileRepository.findAllById(userToProfileMap.values());
+        // 3. Fetch the corresponding Profiles directly
+        List<Profile> profiles = profileRepository.findAllById(profileIds);
         Map<String, Profile> profileMap = profiles.stream()
                 .collect(Collectors.toMap(Profile::getId, p -> p));
 
-        // 5. Build the Nodes using User IDs (to match link references)
+        // 4. Build the Nodes for D3
         List<GraphDataResponse.Node> nodes = new ArrayList<>();
-        for (User user : users) {
-            Profile profile = profileMap.get(user.getProfileId());
-            if (profile != null) {
-                nodes.add(new GraphDataResponse.Node(
-                        user.getId(),
-                        profile.getFirstName() + " " + profile.getLastName(),
-                        profile.getProfession()));
-            }
+        for (Profile profile : profiles) {
+            nodes.add(new GraphDataResponse.Node(
+                    profile.getId(), // Using profileId as the unique node ID
+                    profile.getFirstName() + " " + profile.getLastName(),
+                    profile.getProfession()));
         }
 
-        // 6. Build and FILTER Links
-        // Only include links where BOTH nodes exist in our final nodes list
-        Set<String> validNodeIds = nodes.stream().map(n -> n.getId()).collect(Collectors.toSet());
+        // 5. Build the Links
+        // Ensure both source and target profileIds exist in our node list
+        Set<String> validProfileIds = nodes.stream()
+                .map(GraphDataResponse.Node::getId)
+                .collect(Collectors.toSet());
 
         List<GraphDataResponse.Link> links = connections.stream()
-                .filter(c -> validNodeIds.contains(c.getUsers().get(0)) &&
-                             validNodeIds.contains(c.getUsers().get(1)))
+                .filter(c -> validProfileIds.contains(c.getUsers().get(0)) &&
+                             validProfileIds.contains(c.getUsers().get(1)))
                 .map(c -> new GraphDataResponse.Link(
-                        c.getUsers().get(0),
-                        c.getUsers().get(1),
-                        c.getRelationshipType()))
+                        c.getUsers().get(0), // profileId 1
+                        c.getUsers().get(1), // profileId 2
+                        c.getRelationshipType(),
+                        c.getStatus())) // "PENDING" or "ACCEPTED"
                 .collect(Collectors.toList());
 
         return new GraphDataResponse(nodes, links);
