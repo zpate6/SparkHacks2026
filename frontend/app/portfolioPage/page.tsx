@@ -2,33 +2,67 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { clear } from "console";
 
 export default function PortfolioPage() {
-  const [resume, setResume] = useState("");
-  const [experience, setExperience] = useState("");
-  const [genres, setGenres] = useState("");
-  const [connections, setConnections] = useState("");
+  const [resume, setResume] = useState<string[]>([]);
+  const [experience, setExperience] = useState<string[]>([]);
+  const [genres, setGenres] = useState<string[]>([]);
+  const [connections, setConnections] = useState<string[]>([]);
 
-  // Load saved portfolio
+  const [tempResume, setTempResume] = useState("");
+  const [tempExperience, setTempExperience] = useState("");
+  const [tempGenres, setTempGenres] = useState("");
+  const [tempConnections, setTempConnections] = useState("");
+
+  // Load saved portfolio from localStorage
   useEffect(() => {
     const saved = localStorage.getItem("portfolio");
     if (saved) {
       const data = JSON.parse(saved);
-      setResume(data.resume || "");
-      setExperience(data.experience || "");
-      setGenres(data.genres || "");
-      setConnections(data.connections || "");
+      setResume(data.resume || []);
+      setExperience(data.experience || []);
+      setGenres(data.genres || []);
+      setConnections(data.connections || []);
     }
   }, []);
 
-  // Save on change
-  useEffect(() => {
-    localStorage.setItem(
-      "portfolio",
-      JSON.stringify({ resume, experience, genres, connections })
-    );
-  }, [resume, experience, genres, connections]);
+  // Save portfolio to localStorage
+  const savePortfolio = (key: string, value: string[]) => {
+    const saved = localStorage.getItem("portfolio");
+    const data = saved ? JSON.parse(saved) : {};
+    data[key] = value;
+    localStorage.setItem("portfolio", JSON.stringify(data));
+  };
+
+  // Handle Enter key for input/textarea
+  const handleEnter = (
+    e: React.KeyboardEvent<HTMLTextAreaElement | HTMLInputElement>,
+    tempValue: string,
+    setTemp: (v: string) => void,
+    list: string[],
+    setList: (v: string[]) => void,
+    key: string
+  ) => {
+    if (e.key === "Enter" && tempValue.trim() !== "") {
+      e.preventDefault();
+      const updatedList = [...list, tempValue.trim()];
+      setList(updatedList);
+      setTemp("");
+      savePortfolio(key, updatedList);
+    }
+  };
+
+  // Remove item from list
+  const removeItem = (
+    index: number,
+    list: string[],
+    setList: (v: string[]) => void,
+    key: string
+  ) => {
+    const updatedList = list.filter((_, i) => i !== index);
+    setList(updatedList);
+    savePortfolio(key, updatedList);
+  };
 
   return (
     <div className="relative flex min-h-screen items-center justify-center bg-black overflow-hidden">
@@ -50,48 +84,110 @@ export default function PortfolioPage() {
       </div>
 
       {/* Phone Frame */}
-      <div className="relative h-[720px] w-[560px] rounded-[28px] bg-zinc-900 shadow-[0_10px_50px_rgba(220,38,38,0.35)] overflow-hidden">
+      <div className="relative flex h-[720px] w-[560px] flex-col rounded-[28px] bg-zinc-900 shadow-[0_10px_50px_rgba(220,38,38,0.35)] overflow-hidden">
+        
         {/* Header */}
         <div className="bg-gradient-to-br from-red-600 to-red-900 px-6 pt-10 pb-5 text-white">
           <div className="mb-2 text-center text-4xl">🎥</div>
           <h1 className="text-2xl font-semibold">Your Portfolio</h1>
           <p className="text-sm text-white/90">
-            Edit and view your professional profile
+            Press Enter to save items, click ❌ to remove
           </p>
         </div>
 
-        {/* Split View */}
-        <div className="grid grid-cols-2 gap-4 px-5 py-4 h-[580px]">
-          {/* LEFT — Edit */}
-          <div className="flex flex-col gap-3 overflow-y-auto pr-2">
-            <Section title="Resume">
-              <Textarea value={resume} setValue={setResume} placeholder="Paste or write your resume..." />
-            </Section>
+        {/* CONTENT */}
+        <div className="flex-1 overflow-y-auto px-5 py-4">
+          <div className="grid grid-cols-2 gap-4 min-h-full">
 
-            <Section title="Previous Experience">
-              <Textarea value={experience} setValue={setExperience} placeholder="Past projects, roles, studios..." />
-            </Section>
+            {/* LEFT — Edit */}
+            <div className="flex flex-col gap-4">
+              <Section title="Resume">
+                <Textarea
+                  value={tempResume}
+                  setValue={setTempResume}
+                  placeholder="Write resume item and press Enter..."
+                  onEnter={(e) =>
+                    handleEnter(e, tempResume, setTempResume, resume, setResume, "resume")
+                  }
+                />
+                <RemovableList
+                  items={resume}
+                  remove={(i) => removeItem(i, resume, setResume, "resume")}
+                />
+              </Section>
 
-            <Section title="Movie Genres">
-              <Input value={genres} setValue={setGenres} placeholder="Drama, Action, Indie..." />
-            </Section>
+              <Section title="Previous Experience">
+                <Textarea
+                  value={tempExperience}
+                  setValue={setTempExperience}
+                  placeholder="Write experience and press Enter..."
+                  onEnter={(e) =>
+                    handleEnter(
+                      e,
+                      tempExperience,
+                      setTempExperience,
+                      experience,
+                      setExperience,
+                      "experience"
+                    )
+                  }
+                />
+                <RemovableList
+                  items={experience}
+                  remove={(i) => removeItem(i, experience, setExperience, "experience")}
+                />
+              </Section>
 
-            <Section title="Connections">
-              <Textarea value={connections} setValue={setConnections} placeholder="Who you know & how you're connected" />
-            </Section>
-          </div>
+              <Section title="Movie Genres">
+                <Input
+                  value={tempGenres}
+                  setValue={setTempGenres}
+                  placeholder="Type genre and press Enter..."
+                  onEnter={(e) =>
+                    handleEnter(e, tempGenres, setTempGenres, genres, setGenres, "genres")
+                  }
+                />
+                <RemovableList
+                  items={genres}
+                  remove={(i) => removeItem(i, genres, setGenres, "genres")}
+                />
+              </Section>
 
-          {/* RIGHT — Live Preview */}
-          <div className="rounded-xl border border-zinc-800 bg-zinc-950 p-4 overflow-y-auto">
-            <PreviewBlock title="Resume" content={resume} />
-            <PreviewBlock title="Experience" content={experience} />
-            <PreviewBlock title="Genres" content={genres} />
-            <PreviewBlock title="Connections" content={connections} />
+              <Section title="Connections">
+                <Textarea
+                  value={tempConnections}
+                  setValue={setTempConnections}
+                  placeholder="Add connections and press Enter..."
+                  onEnter={(e) =>
+                    handleEnter(
+                      e,
+                      tempConnections,
+                      setTempConnections,
+                      connections,
+                      setConnections,
+                      "connections"
+                    )
+                  }
+                />
+                <RemovableList
+                  items={connections}
+                  remove={(i) => removeItem(i, connections, setConnections, "connections")}
+                />
+              </Section>
+            </div>
+
+            {/* RIGHT — Live Preview */}
+            <div className="rounded-xl border border-zinc-800 bg-zinc-950 p-4 overflow-y-auto">
+              <PreviewBlock title="Resume" content={resume.join("\n")} />
+              <PreviewBlock title="Experience" content={experience.join("\n")} />
+              <PreviewBlock title="Genres" content={genres.join(", ")} />
+              <PreviewBlock title="Connections" content={connections.join("\n")} />
+            </div>
           </div>
         </div>
 
         {/* Footer */}
-        <div className="absolute bottom-0 left-0 right-0 px-6 pb-4">
+        <div className="border-t border-zinc-800 px-6 py-4 bg-zinc-900">
           <Link
             href="/homePage"
             className="block w-full rounded-full border-2 border-red-600 py-3 text-center font-semibold text-red-500 hover:bg-red-600 hover:text-white transition"
@@ -130,26 +226,47 @@ function Section({ title, children }: any) {
   );
 }
 
-function Input({ value, setValue, placeholder }: any) {
+function Input({ value, setValue, placeholder, onEnter }: any) {
   return (
     <input
       value={value}
       onChange={(e) => setValue(e.target.value)}
+      onKeyDown={onEnter}
       placeholder={placeholder}
       className="w-full rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm text-white outline-none focus:border-red-600"
     />
   );
 }
 
-function Textarea({ value, setValue, placeholder }: any) {
+function Textarea({ value, setValue, placeholder, onEnter }: any) {
   return (
     <textarea
       value={value}
       onChange={(e) => setValue(e.target.value)}
+      onKeyDown={onEnter}
       placeholder={placeholder}
-      rows={4}
+      rows={3}
       className="w-full resize-none rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm text-white outline-none focus:border-red-600"
     />
+  );
+}
+
+// List with remove buttons
+function RemovableList({ items, remove }: { items: string[]; remove: (i: number) => void }) {
+  return (
+    <ul className="mt-1 max-h-32 overflow-y-auto text-xs text-zinc-300 list-disc list-inside">
+      {items.map((item, idx) => (
+        <li key={idx} className="flex justify-between items-center">
+          <span>{item}</span>
+          <button
+            onClick={() => remove(idx)}
+            className="ml-2 text-red-500 hover:text-red-400 font-bold"
+          >
+            ❌
+          </button>
+        </li>
+      ))}
+    </ul>
   );
 }
 
@@ -158,9 +275,7 @@ function PreviewBlock({ title, content }: any) {
   return (
     <div className="mb-4">
       <h4 className="mb-1 text-sm font-semibold text-red-500">{title}</h4>
-      <p className="text-xs whitespace-pre-wrap text-zinc-300">
-        {content}
-      </p>
+      <p className="text-xs whitespace-pre-wrap text-zinc-300">{content}</p>
     </div>
   );
 }
