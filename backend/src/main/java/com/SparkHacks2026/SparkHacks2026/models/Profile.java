@@ -1,10 +1,12 @@
 package com.SparkHacks2026.SparkHacks2026.models;
 
+import lombok.Data;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.List;
 
+@Data
 @Document(collection = "profiles")
 public class Profile {
     @Id
@@ -14,6 +16,7 @@ public class Profile {
     private String profession;
     private String zipcode;
     private List<String> skills;
+    private List<String> genres;
     private PreferredPay preferredPay;
 
     public static class PreferredPay {
