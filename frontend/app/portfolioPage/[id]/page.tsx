@@ -10,7 +10,7 @@ export default function UsersPage() {
   const [error, setError] = useState<string | null>(null);
   
   // Replace with a real user ID from your session later
-  const currentTestUserId = "6986ed0728957411d0516851"; 
+  const currentTestUserId = "698763b17cabdcf990b901e4"; 
 
   useEffect(() => {
     getAllUsers()

@@ -58,8 +58,17 @@ public class ConnectionService {
     }
 
     // Finds the shortest path (up to 7 degrees) between two users
-    public List<String> findConnectionPath(String startUserId, String targetUserId) {
-        if (startUserId.equals(targetUserId)) return Collections.singletonList(startUserId);
+    public List<Map<String, String>> findConnectionPath(String fromProfileId, String toProfileId) {
+        // 1. Resolve Profile IDs to User IDs
+        User startUser = userRepository.findByProfileId(fromProfileId).orElse(null);
+        User targetUser = userRepository.findByProfileId(toProfileId).orElse(null);
+
+        if (startUser == null || targetUser == null) return Collections.emptyList();
+
+        String startUserId = startUser.getId();
+        String targetUserId = targetUser.getId();
+
+        if (startUserId.equals(targetUserId)) return Collections.emptyList();
 
         LinkedList<String> queue = new LinkedList<>();
         Map<String, String> predecessors = new HashMap<>();
@@ -69,6 +78,7 @@ public class ConnectionService {
         visited.add(startUserId);
 
         int depth = 0;
+        boolean found = false;
         while (!queue.isEmpty() && depth < 10) {
             int levelSize = queue.size();
             for (int i = 0; i < levelSize; i++) {
@@ -83,15 +93,33 @@ public class ConnectionService {
                         predecessors.put(neighbor, current);
 
                         if (neighbor.equals(targetUserId)) {
-                            return reconstructPath(predecessors, targetUserId);
+                            found = true;
+                            break;
                         }
                         queue.add(neighbor);
                     }
                 }
+                if (found) break;
             }
+            if (found) break;
             depth++;
         }
-        return Collections.emptyList(); // No path found within 7 degrees
+        if (!found) return Collections.emptyList();
+
+        // 3. Reconstruct Path and attach Profile Names
+        List<String> userPath = reconstructPath(predecessors, targetUserId);
+        List<Map<String, String>> result = new ArrayList<>();
+
+        for (String uid : userPath) {
+            User u = userRepository.findById(uid).orElse(null);
+            Profile p = (u != null) ? profileRepository.findById(u.getProfileId()).orElse(null) : null;
+
+            Map<String, String> node = new HashMap<>();
+            node.put("id", uid);
+            node.put("name", p != null ? p.getFirstName() + " " + p.getLastName() : "Unknown");
+            result.add(node);
+        }
+        return result;
     }
 
     private List<String> getAcceptedNeighbors(String userId) {
